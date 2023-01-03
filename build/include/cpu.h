@@ -35,6 +35,12 @@ cpu *new_cpu(memory *m);
 
 /* Register struct functions */
 registers *new_registers();
-
-
+uint16_t get_bc(registers *regs);
+uint16_t get_de(registers *regs);
+uint16_t get_hl(registers *regs);
+uint16_t get_af(registers *regs);
+void set_af(registers *regs, uint16_t val);
+void set_bc(registers *regs, uint16_t val);
+void set_de(registers *regs, uint16_t val);
+void set_hl(registers *regs, uint16_t val);
 #endif

@@ -29,8 +29,11 @@ typedef struct stack {
 
 stack *new_stack();
 bool stack_is_empty(stack *s);
-bool stack_push_back(stack *s, uint16_t value);
-uint16_t stack_pop_back(stack *s);
+bool stack_push(stack *s, uint16_t value);
+uint16_t stack_pop(stack *s);
 uint16_t stack_peak(stack *s);
+
+uint8_t conv16_to8(uint16_t u, bool want_hi);
+uint16_t conv8_to16(uint8_t u1, uint8_t u2);
 
 #endif // PARSER_H
