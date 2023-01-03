@@ -1,3 +1,4 @@
+#include "utils.h"
 #include <inttypes.h>
 #include <stdbool.h>
 #ifndef MEM_H
@@ -15,12 +16,10 @@ typedef struct memory {
 memory *new_memory();
 
 bool mem_write8(memory *m, uint16_t address, uint8_t data);
-
-bool mem_write16(memory *m, uint16_t address, uint8_t data);
-
+bool mem_write16(memory *m, uint16_t address, uint16_t data);
 uint8_t mem_read8(memory *m, uint16_t address);
-
 uint16_t mem_read16(memory *m, uint16_t address);
+void write_game_file(memory *mem, aFile gameFile); 
 
 /*********************/
 /* Memory boundaries */

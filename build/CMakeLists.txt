@@ -11,6 +11,8 @@ project (gb)
 set(SOURCES
     src/main.c
     src/mem/mem.c
+    src/cpu/cpu.c
+    src/instruction/instruction.c
     src/utils/utils.c
     include/r_utils.h
     )
@@ -44,7 +46,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # Testing memory 
-add_executable(test_memory testing/mem_test.cpp src/mem/mem.c )
+add_executable(test_memory testing/mem_test.cpp src/mem/mem.c src/utils/utils.c)
 
 add_test(testAll test_memory)
 
@@ -58,8 +60,15 @@ add_test(testAll test_utils)
 target_link_libraries(test_utils gtest_main)
 
 # Testing cpu
-add_executable(test_cpu testing/cpu_test.cpp src/cpu/cpu.c src/utils/utils.c src/mem/mem.c )
+add_executable(test_cpu testing/cpu_test.cpp src/cpu/cpu.c src/utils/utils.c src/mem/mem.c src/instruction/instruction.c)
 
 add_test(testAll test_cpu)
 
 target_link_libraries(test_cpu gtest_main)
+
+# Testing instruction
+add_executable(test_instruction testing/instruction_test.cpp src/instruction/instruction.c src/utils/utils.c src/mem/mem.c src/cpu/cpu.c)
+
+add_test(testAll test_instruction)
+
+target_link_libraries(test_instruction gtest_main)
