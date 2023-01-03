@@ -1,6 +1,6 @@
 # Gameboy-emulator
 
-To run:
+To compile: <br>
 
 ```./compile.sh``` <br>
 
