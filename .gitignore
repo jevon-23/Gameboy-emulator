@@ -8,3 +8,5 @@ gb
 lib
 test_memory
 build/rust_utils/target
+test_utils
+*.swp

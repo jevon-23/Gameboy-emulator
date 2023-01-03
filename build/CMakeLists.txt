@@ -10,8 +10,9 @@ project (gb)
 # Create a sources variable with a link to all cpp files to compile
 set(SOURCES
     src/main.c
-    include/r_utils.h
     src/mem/mem.c
+    src/utils/utils.c
+    include/r_utils.h
     )
 
 # Add an executable with the above sources
@@ -42,11 +43,16 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-# Testing instruction set 
+# Testing memory 
 add_executable(test_memory testing/mem_test.cpp src/mem/mem.c )
 
 add_test(testAll test_memory)
 
 target_link_libraries(test_memory gtest_main)
 
+# Testing utils
+add_executable(test_utils testing/utils_test.cpp src/utils/utils.c )
 
+add_test(testAll test_utils)
+
+target_link_libraries(test_utils gtest_main)
