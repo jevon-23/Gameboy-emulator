@@ -33,21 +33,21 @@ TEST(testStackOps, stackOps) {
   uint16_t one = 0x01;
   uint16_t two = 0x02;
 
-  EXPECT_EQ(stack_push_back(s, one), true);
+  EXPECT_EQ(stack_push(s, one), true);
   EXPECT_EQ(stack_peak(s), one);
   EXPECT_EQ(s->len, 1);
   EXPECT_EQ(stack_is_empty(s), false); 
 
-  EXPECT_EQ(stack_push_back(s, two), true);
+  EXPECT_EQ(stack_push(s, two), true);
   EXPECT_EQ(stack_peak(s), two);
   EXPECT_EQ(s->len, 2);
   EXPECT_EQ(stack_is_empty(s), false); 
 
-  EXPECT_EQ(stack_pop_back(s), two);
+  EXPECT_EQ(stack_pop(s), two);
   EXPECT_EQ(s->len, 1);
   EXPECT_EQ(stack_peak(s), one);
 
-  EXPECT_EQ(stack_pop_back(s), one);
+  EXPECT_EQ(stack_pop(s), one);
   EXPECT_EQ(stack_peak(s), 0x00);
   EXPECT_EQ(stack_is_empty(s), true); 
 

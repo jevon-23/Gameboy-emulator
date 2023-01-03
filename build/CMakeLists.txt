@@ -56,3 +56,10 @@ add_executable(test_utils testing/utils_test.cpp src/utils/utils.c )
 add_test(testAll test_utils)
 
 target_link_libraries(test_utils gtest_main)
+
+# Testing cpu
+add_executable(test_cpu testing/cpu_test.cpp src/cpu/cpu.c src/utils/utils.c src/mem/mem.c )
+
+add_test(testAll test_cpu)
+
+target_link_libraries(test_cpu gtest_main)

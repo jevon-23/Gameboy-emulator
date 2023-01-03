@@ -28,6 +28,9 @@ void printSpace() {
   printf("\n");
 }
 
+/***********************/
+/* AFILE functionality */
+/***********************/
 /*
 Reads the contents of theFile.
 */
@@ -66,6 +69,9 @@ aFile readFile(char *fileName) {
   return theFile;
 }
 
+/***********************/
+/* Stack Functionality */
+/***********************/
 stack *new_stack() {
   stack *out = (stack *)malloc(sizeof(stack));
   out->len = 0;
@@ -80,7 +86,7 @@ bool stack_is_empty(stack *s) {
     return false;
 }
 
-bool stack_push_back(stack *s, uint16_t value) {
+bool stack_push(stack *s, uint16_t value) {
   if (s->len >= s->max_len)
     return false;
 
@@ -95,11 +101,25 @@ uint16_t stack_peak(stack *s) {
   return s->data[s->len - 1];
 }
 
-uint16_t stack_pop_back(stack *s) {
+uint16_t stack_pop(stack *s) {
   if (stack_is_empty(s))
     return 0;
 
   uint16_t out = s->data[s->len - 1];
   s->len--;
+  return out;
+}
+
+/**********************/
+/* Misc Functionality */
+/**********************/
+uint8_t conv16_to8(uint16_t u, bool want_hi) {
+  if (want_hi)
+    return (uint8_t)((u & 0xFF00) >> 8);
+  return (uint8_t)(u & 0x00FF);
+}
+
+uint16_t conv8_to16(uint8_t u1, uint8_t u2) {
+  uint16_t out = (uint16_t)(u1) << 8 | u2;
   return out;
 }
