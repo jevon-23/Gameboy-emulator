@@ -7,8 +7,8 @@ typedef struct instruction {
     uint8_t opcode;
     uint8_t len;
     uint8_t num_cycles;
-    void(*fn)(cpu *, struct instruction);
+    uint8_t full_opcode[3];
 
 }instruction;
-instruction new_instruction(cpu *core, uint8_t opcode);
+instruction exec_next_instruction(cpu *core, uint8_t opcode);
 #endif

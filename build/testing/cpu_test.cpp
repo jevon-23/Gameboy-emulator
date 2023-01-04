@@ -15,11 +15,11 @@ TEST(buildCPUTest, buildCpu) {
 
 TEST(regComboTest, regCombo) {
     registers *regs = new_registers();
-    set_af(regs, 0xbeef);
-    EXPECT_EQ(get_af(regs), 0xbeef);
-    set_bc(regs, 0x00ff);
-    EXPECT_EQ(get_bc(regs), 0x00ff);
-    EXPECT_EQ(get_de(regs), 0x0000);
+    set_reg_pair(regs, _AF,  0xbeef);
+    EXPECT_EQ(get_reg_pair(regs, _AF), 0xbeef);
+    set_reg_pair(regs, _BC,  0x00ff);
+    EXPECT_EQ(get_reg_pair(regs, _BC), 0x00ff);
+    EXPECT_EQ(get_reg_pair(regs, _DE), 0x0000);
 }
 
 TEST(setFlagTest, setFlag) {

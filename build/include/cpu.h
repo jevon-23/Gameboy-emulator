@@ -21,6 +21,10 @@ typedef struct registers {
   uint8_t flag; /* ZNHC.... */
 } registers;
 
+enum reg_pairs {_AF, _BC, _DE, _HL, __};
+
+enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _ };
+
 /* CPU struct */
 typedef struct cpu {
   memory *mem;
@@ -43,14 +47,10 @@ cpu *new_cpu(memory *m);
 
 /* Register struct functions */
 registers *new_registers();
-uint16_t get_bc(registers *regs);
-uint16_t get_de(registers *regs);
-uint16_t get_hl(registers *regs);
-uint16_t get_af(registers *regs);
-void set_af(registers *regs, uint16_t val);
-void set_bc(registers *regs, uint16_t val);
-void set_de(registers *regs, uint16_t val);
-void set_hl(registers *regs, uint16_t val);
+
+/* Register pair functions */
+uint16_t get_reg_pair(registers *regs, enum reg_pairs pair);
+void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val);
 void set_flag(registers *reg, uint8_t mask, bool set);
 
 void run_cpu_loop(cpu *core);

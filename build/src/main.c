@@ -20,5 +20,7 @@ int main(int arg, char *argv[]) {
   // Test rust interface
   // char out = test_fn(0x10);
   // printf("output of test_fn: %x\n", out);
+  RV16 out = add_overflow16(0x01, 0x02);
+  printf("out: %x\n", out.rv);
   return 0;
 }
