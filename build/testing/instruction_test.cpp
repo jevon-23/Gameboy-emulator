@@ -27,20 +27,6 @@ TEST(stopTest, stop) {
     EXPECT_EQ(c->state, _STOP);
 }
 
-TEST(loadStack16Test, loadStack16) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    stack_push(c->stack, 0xbeef);
-    /* ld BC, nnnn => 0x01nnnn */
-    mem_write8(c->mem, c->regs->pc, 0x08); /* load BC nnnn */
-    mem_write8(c->mem, c->regs->pc+1, 0xde);
-    mem_write8(c->mem, c->regs->pc+2, 0xad);
-    mem_write8(c->mem, c->regs->pc+3, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(mem_read16(c->mem, 0xdead), 0xefbe);
-    EXPECT_EQ(stack_peak(c->stack), 0xbeef);
-}
-
 TEST(shiftRightTest, shiftRight) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -60,42 +46,6 @@ TEST(shiftRightTest, shiftRight) {
     EXPECT_EQ(c->regs->flag, 0);
 }
 
-TEST(shiftLeftTest, shiftLeft) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    /* ld a, nn => 0x06nn */
-    set_reg(c->regs, _A, 0x85);
-    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
-    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x0A);
-    EXPECT_EQ(c->regs->flag, CY_MASK);
-
-    set_reg(c->regs, _A, 0x45);
-    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
-    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x8A);
-    EXPECT_EQ(c->regs->flag, 0);
-}
-
-TEST(loadBTest, loadB) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    /* ld B, nn => 0x06nn */
-    mem_write8(c->mem, c->regs->pc, 0x06); /* load B nn */
-    mem_write8(c->mem, c->regs->pc+1, 0xbe);
-    mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xbe);
-
-    /* ld C, nn => 0x06nn */
-    mem_write8(c->mem, c->regs->pc, 0x0e); /* load B nn */
-    mem_write8(c->mem, c->regs->pc+1, 0xef);
-    mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _C)), 0xef);
-}
 
 TEST(dec8Test, dec8) {
     memory *m = new_memory();
@@ -170,6 +120,123 @@ TEST(inc8Test, inc8) {
     EXPECT_EQ(c->regs->flag, 0x00);
 }
 
+TEST(dec16Test, dec16) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* ld BC, nnnn => 0x01nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc+1, 0xbe);
+    mem_write8(c->mem, c->regs->pc+2, 0xef);
+    mem_write8(c->mem, c->regs->pc+3, 0x0B); /* Decrease BC - 1 */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef-1);
+
+    /* ld BC, nnnn => 0x01nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc+1, 0x00);
+    mem_write8(c->mem, c->regs->pc+2, 0x00);
+    mem_write8(c->mem, c->regs->pc+3, 0x0B); /* Increase BC + 1 */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xffff);
+}
+
+TEST(addRegPairTest, addRegPair) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* ld hl, 8a23 */
+    set_reg_pair(c->regs, _HL, 0x8a23);
+
+    /* ld BC, nnnn => 0x01nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC 0605 */
+    mem_write8(c->mem, c->regs->pc+1, 0x06);
+    mem_write8(c->mem, c->regs->pc+2, 0x05);
+    mem_write8(c->mem, c->regs->pc+3, 0x09); /* HL = HL + BC */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0x0605);
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x9028);
+    EXPECT_EQ(c->regs->flag, H_MASK);
+
+    set_reg_pair(c->regs, _HL, 0x8a23);
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC 0605 */
+    mem_write8(c->mem, c->regs->pc+1, 0x8a);
+    mem_write8(c->mem, c->regs->pc+2, 0x23);
+    mem_write8(c->mem, c->regs->pc+3, 0x09); /* HL = HL + BC */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0x8a23);
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x1446);
+    EXPECT_EQ(c->regs->flag, H_MASK | CY_MASK);
+}
+
+TEST(loadA_addyTest, loadA_addy) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* Set A */
+    set_reg(c->regs, _A, 0xaf);
+    set_reg_pair(c->regs, _BC, 0xbeef);
+    mem_write8(c->mem, c->regs->pc, 0xA); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
+    EXPECT_EQ(mem_read8(c->mem, 0xbeef), 0xaf);
+    EXPECT_EQ( *(get_reg(c->regs, _A)), 0xaf);
+}
+
+TEST(loadStack16Test, loadStack16) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    stack_push(c->stack, 0xbeef);
+    /* ld BC, nnnn => 0x01nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x08); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc+1, 0xde);
+    mem_write8(c->mem, c->regs->pc+2, 0xad);
+    mem_write8(c->mem, c->regs->pc+3, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read16(c->mem, 0xdead), 0xefbe);
+    EXPECT_EQ(stack_peak(c->stack), 0xbeef);
+}
+
+TEST(shiftLeftTest, shiftLeft) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* ld a, nn => 0x06nn */
+    set_reg(c->regs, _A, 0x85);
+    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
+    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x0A);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+
+    set_reg(c->regs, _A, 0x45);
+    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
+    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x8A);
+    EXPECT_EQ(c->regs->flag, 0);
+}
+
+TEST(loadBTest, loadB) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* ld B, nn => 0x06nn */
+    mem_write8(c->mem, c->regs->pc, 0x06); /* load B nn */
+    mem_write8(c->mem, c->regs->pc+1, 0xbe);
+    mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xbe);
+
+    /* ld C, nn => 0x06nn */
+    mem_write8(c->mem, c->regs->pc, 0x0e); /* load B nn */
+    mem_write8(c->mem, c->regs->pc+1, 0xef);
+    mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _C)), 0xef);
+}
+
+
 TEST(inc16Test, inc16) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -233,70 +300,4 @@ TEST(loadBCTest, loadBC) {
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _DE)), 0xad);
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xad);
 }
-
-TEST(addRegPairTest, addRegPair) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    /* ld hl, 8a23 */
-    set_reg_pair(c->regs, _HL, 0x8a23);
-
-    /* ld BC, nnnn => 0x01nnnn */
-    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC 0605 */
-    mem_write8(c->mem, c->regs->pc+1, 0x06);
-    mem_write8(c->mem, c->regs->pc+2, 0x05);
-    mem_write8(c->mem, c->regs->pc+3, 0x09); /* HL = HL + BC */
-    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0x0605);
-    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x9028);
-    EXPECT_EQ(c->regs->flag, H_MASK);
-
-    set_reg_pair(c->regs, _HL, 0x8a23);
-    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC 0605 */
-    mem_write8(c->mem, c->regs->pc+1, 0x8a);
-    mem_write8(c->mem, c->regs->pc+2, 0x23);
-    mem_write8(c->mem, c->regs->pc+3, 0x09); /* HL = HL + BC */
-    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0x8a23);
-    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x1446);
-    EXPECT_EQ(c->regs->flag, H_MASK | CY_MASK);
-}
-
-TEST(loadA_addyTest, loadA_addy) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    /* Set A */
-    set_reg(c->regs, _A, 0xaf);
-    set_reg_pair(c->regs, _BC, 0xbeef);
-    mem_write8(c->mem, c->regs->pc, 0xA); /* load BC nnnn */
-    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
-    EXPECT_EQ(mem_read8(c->mem, 0xbeef), 0xaf);
-    EXPECT_EQ( *(get_reg(c->regs, _A)), 0xaf);
-}
-
-TEST(dec16Test, dec16) {
-    memory *m = new_memory();
-    cpu *c = new_cpu(m);
-    /* ld BC, nnnn => 0x01nnnn */
-    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
-    mem_write8(c->mem, c->regs->pc+1, 0xbe);
-    mem_write8(c->mem, c->regs->pc+2, 0xef);
-    mem_write8(c->mem, c->regs->pc+3, 0x0B); /* Decrease BC - 1 */
-    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef-1);
-
-    /* ld BC, nnnn => 0x01nnnn */
-    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
-    mem_write8(c->mem, c->regs->pc+1, 0x00);
-    mem_write8(c->mem, c->regs->pc+2, 0x00);
-    mem_write8(c->mem, c->regs->pc+3, 0x0B); /* Increase BC + 1 */
-    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xffff);
-}
-
 }

@@ -71,11 +71,21 @@ void stack_pop_i(cpu *core, instruction i, enum reg_pairs pair) {
 /* Shifting register left or right by 1 */
 void shift_reg(cpu *core, instruction i, enum reg_enum reg, bool left_shift) {
   uint8_t *r = get_reg(core->regs, reg);
-  set_all_flags(core->regs, false, false, false,
-                check_carry8_shift(*r, left_shift));
 
-  left_shift ? set_reg(core->regs, reg, (*r) << 1)
-             : set_reg(core->regs, reg, (*r) >> 1);
+  /* New value of the register */
+  uint8_t new_r = left_shift ? (*r) << 1 : (*r) >> 1;
+
+  /* We don't set the Z flag if we are doing one of the
+   * RLCA, RRCA, RLA, RRA */
+  if (i.opcode == 0x07 || i.opcode == 0x17 || i.opcode == 0x0f ||
+      i.opcode == 0x1f)
+    set_all_flags(core->regs, false, false, false,
+                  check_carry8_shift(*r, left_shift));
+  else
+    set_all_flags(core->regs, check_zero(new_r), false, false,
+                  check_carry8_shift(*r, left_shift));
+
+  set_reg(core->regs, reg, new_r);
 }
 
 /* Subsitute functionality */
@@ -190,6 +200,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   out.opcode = opcode;
 
   switch (opcode) {
+    /***************/
+    /* 0x00 - 0x0f */
+    /***************/
   case 0x00: /* noop */
     set_instruction_vars(core, &out, 1, 4);
     /* noop(core, out); */
@@ -255,6 +268,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     shift_reg(core, out, _A, false);
     break;
 
+    /***************/
+    /* 0x10 - 0x1f */
+    /***************/
   case 0x10: /* STOP */
     set_instruction_vars(core, &out, 2, 4);
     stop_cpu(core, out);
@@ -263,12 +279,33 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 3, 12);
     load_reg(core, out, _, _, _DE);
     break;
-  case 0x12: /* LD BC, A => 0x12 */
+  case 0x12: /* LD DE, A => 0x12 */
     set_instruction_vars(core, &out, 1, 8);
     load_reg(core, out, _A, _, _DE);
     break;
+  case 0x13: /* INC DE */
+    set_instruction_vars(core, &out, 1, 8);
+    add_reg(core, out, _1, _, _DE, __);
+    break;
+  case 0x14: /* INC D */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _D, _1, __, __);
+    break;
+  case 0x15: /* DEC D */
+    set_instruction_vars(core, &out, 1, 4);
+    sub_reg(core, out, _D, _1, __, __);
+    break;
+  case 0x16: /* LD D, d8 => 0x06nn */
+    set_instruction_vars(core, &out, 2, 8);
+    load_reg(core, out, _, _D, __);
+    break;
+  case 0x17: /* RLA */
+    set_instruction_vars(core, &out, 1, 4);
+    shift_reg(core, out, _A, true);
+    break;
   default:
     printf("Invalid opcode: %x\n", opcode);
+    exit(-1);
   }
 
   return out;

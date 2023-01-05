@@ -1,4 +1,3 @@
-#include "../../include/cpu.h"
 #include "../../include/instruction.h"
 #include "../../include/mem.h"
 #include "../../include/utils.h"
@@ -56,10 +55,7 @@ void run_cpu_loop(cpu *core) {
    */
 
   /* fetch */
-  uint8_t opcode = mem_read8(core->mem, core->regs->pc);
-
-  /* decode */
-  exec_next_instruction(core, opcode);
+  uint8_t opcode = 1;
 
   /* 0x00 == noop, but will be used as quit for testing */
   while (opcode != 0x00) {
@@ -90,7 +86,8 @@ void run_cpu(cpu *core) {
     return;
 
   /* decode & execute */
-  exec_next_instruction(core, opcode);
+  instruction i = exec_next_instruction(core, opcode);
+  printf("Opcode executed: %x\n", i.opcode);
 }
 
 /**************************/
