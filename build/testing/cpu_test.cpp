@@ -30,6 +30,15 @@ TEST(setFlagTest, setFlag) {
     EXPECT_EQ(regs->flag, Z_MASK | N_MASK);
     set_flag(regs, Z_MASK, false);
     EXPECT_EQ(regs->flag, N_MASK);
+    set_flag(regs, N_MASK, false);
+    EXPECT_EQ(regs->flag, 0);
+}
+
+TEST(getSetRegTest, getSetReg) {
+    registers *regs = new_registers();
+    set_reg(regs, _A, 0x10);
+    EXPECT_EQ(*regs->a, 0x10);
+    EXPECT_EQ(*(get_reg(regs, _A)), 0x10);
 }
 
 }

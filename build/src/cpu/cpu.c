@@ -13,6 +13,7 @@ cpu *new_cpu(memory *m) {
   out->mem = m;
   out->regs = new_registers();
   out->stack = new_stack();
+  out->state = _RUNNING;
 
   /* Set the regiseters */
   out->regs->pc = GAME_ROM_BANK_0_START;
@@ -40,6 +41,13 @@ registers *new_registers() {
 /* CPU fetch / decode / exec loop */
 /**********************************/
 
+bool check_low_power(cpu *core, uint8_t opcode) {
+  if (core->state == _STOP)
+    /* TODO: Check for reset with opcode */
+    return true;
+  return false;
+}
+
 /* Used for testing and main b4 I add drawing */
 void run_cpu_loop(cpu *core) {
   /* Program counter is increased based on the instruction being exec.
@@ -57,6 +65,11 @@ void run_cpu_loop(cpu *core) {
   while (opcode != 0x00) {
     opcode = mem_read8(core->mem, core->regs->pc);
 
+    /* Inside of low power mode, do not exec next instruction
+     * unless we have a reset or movement */
+    if (check_low_power(core, opcode))
+      continue;
+
     /* decode & exec */
     exec_next_instruction(core, opcode);
   }
@@ -71,6 +84,11 @@ void run_cpu(cpu *core) {
   /* fetch */
   uint8_t opcode = mem_read8(core->mem, core->regs->pc);
 
+  /* Inside of low power mode, do not exec next instruction
+   * unless we have a reset or movement */
+  if (check_low_power(core, opcode))
+    return;
+
   /* decode & execute */
   exec_next_instruction(core, opcode);
 }
@@ -78,11 +96,13 @@ void run_cpu(cpu *core) {
 /**************************/
 /* Register functionality */
 /**************************/
+
 uint16_t get_af(registers *regs) { return conv8_to16(*regs->a, *regs->f); }
 uint16_t get_bc(registers *regs) { return conv8_to16(*regs->b, *regs->c); }
 uint16_t get_de(registers *regs) { return conv8_to16(*regs->d, *regs->e); }
 uint16_t get_hl(registers *regs) { return conv8_to16(*regs->h, *regs->l); }
 
+/* Takes in pointers to the registers */
 void set_regs(uint16_t val, uint8_t *hi, uint8_t *lo) {
   *hi = conv16_to8(val, true);
   *lo = conv16_to8(val, false);
@@ -92,6 +112,33 @@ void set_af(registers *regs, uint16_t val) { set_regs(val, regs->a, regs->f); }
 void set_bc(registers *regs, uint16_t val) { set_regs(val, regs->b, regs->c); }
 void set_de(registers *regs, uint16_t val) { set_regs(val, regs->d, regs->e); }
 void set_hl(registers *regs, uint16_t val) { set_regs(val, regs->h, regs->l); }
+
+void set_reg(registers *regs, enum reg_enum r, uint8_t v) {
+  *(get_reg(regs, r)) = v;
+}
+uint8_t *get_reg(registers *regs, enum reg_enum r) {
+  switch (r) {
+  case _A:
+    return regs->a;
+  case _B:
+    return regs->b;
+  case _C:
+    return regs->c;
+  case _D:
+    return regs->d;
+  case _E:
+    return regs->e;
+  case _F:
+    return regs->f;
+  case _H:
+    return regs->h;
+  case _L:
+    return regs->l;
+  default:
+    printf("Invalid register passed in\n");
+    exit(-1);
+  }
+}
 
 uint16_t get_reg_pair(registers *regs, enum reg_pairs pair) {
   switch (pair) {
@@ -120,7 +167,7 @@ void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val) {
   case _HL:
     return set_hl(regs, val);
   default:
-    printf("invalid register passed in\n");
+    printf("invalid register passed in to pair\n");
     exit(-1);
   }
 }
@@ -134,4 +181,16 @@ void set_flag(registers *reg, uint8_t mask, bool set) {
     reg->flag |= mask;
   else
     reg->flag &= ~mask;
+}
+
+void set_all_flags(registers *reg, int z, int n, int h, int cy) {
+  /* 2 => unused */
+  if (z < 2)
+    set_flag(reg, Z_MASK, z);
+  if (n < 2)
+    set_flag(reg, N_MASK, n);
+  if (h < 2)
+    set_flag(reg, H_MASK, h);
+  if (cy < 2)
+    set_flag(reg, CY_MASK, cy);
 }

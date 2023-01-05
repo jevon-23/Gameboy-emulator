@@ -28,6 +28,19 @@ impl RV8 {
 }
 
 #[no_mangle]
+pub extern "C" fn sub_overflow8(arg1 : u8, arg2 : u8) -> RV8 {
+    let sub_result : (u8, bool) = arg1.overflowing_sub(arg2);
+    return RV8::new(sub_result.0, sub_result.1);
+}
+
+#[no_mangle]
+pub extern "C" fn sub_overflow16(arg1 : u16, arg2 : u16) -> RV16 {
+    let sub_result : (u16, bool) = arg1.overflowing_sub(arg2);
+
+    return RV16::new(sub_result.0, sub_result.1);
+}
+
+#[no_mangle]
 pub extern "C" fn add_overflow8(arg1 : u8, arg2 : u8) -> RV8 {
     let add_result : (u8, bool) = arg1.overflowing_add(arg2);
     return RV8::new(add_result.0, add_result.1);
@@ -45,17 +58,8 @@ pub extern "C" fn test_fn(arg : u8) -> u8 {
     return 0x20;
 }
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }

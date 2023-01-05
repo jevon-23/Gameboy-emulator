@@ -13,6 +13,10 @@ typedef struct RV16 {
   bool over_flow;
 } RV16;
 
+struct RV8 sub_overflow8(uint8_t arg1, uint8_t arg2);
+
+struct RV16 sub_overflow16(uint16_t arg1, uint16_t arg2);
+
 struct RV8 add_overflow8(uint8_t arg1, uint8_t arg2);
 
 struct RV16 add_overflow16(uint16_t arg1, uint16_t arg2);

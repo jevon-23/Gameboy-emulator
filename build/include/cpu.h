@@ -23,13 +23,16 @@ typedef struct registers {
 
 enum reg_pairs {_AF, _BC, _DE, _HL, __};
 
-enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _ };
+enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };
+
+enum STATE {_STOP, _RUNNING };
 
 /* CPU struct */
 typedef struct cpu {
   memory *mem;
   registers *regs;
   stack *stack;
+  enum STATE state;
 } cpu;
 
 /* CPU struct functions */
@@ -49,9 +52,12 @@ cpu *new_cpu(memory *m);
 registers *new_registers();
 
 /* Register pair functions */
+uint8_t *get_reg(registers *regs, enum reg_enum r);
+void set_reg(registers *regs, enum reg_enum r, uint8_t v);
 uint16_t get_reg_pair(registers *regs, enum reg_pairs pair);
 void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val);
 void set_flag(registers *reg, uint8_t mask, bool set);
+void set_all_flags(registers *reg, int z, int n, int h, int cy);
 
 void run_cpu_loop(cpu *core);
 void run_cpu(cpu *core);
