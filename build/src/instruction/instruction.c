@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Private fn header */
+void set_instruction_vars(cpu *core, instruction *i, uint8_t len,
+                          uint8_t num_cycles);
+
 /**********************************/
 /* Checking for the flag register */
 /**********************************/
@@ -43,23 +47,54 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 
 void check_daa(cpu *core, uint8_t rv) {
+  /* https://forums.nesdev.org/viewtopic.php?t=15944
+   * From what I understand, we are trying to change the output of
+   * an arithmetic instruction to a decimal coded version.
+   * If the carry flags (HC || C), the number may be an invalid
+   * binary coded num, or it may just be the incorrect number, hence
+   * the updates to RV that take place throughout the fn */
   if (mem_read8(core->mem, core->regs->pc) == 0x27) {
     core->regs->pc++;
     /* Binary decode the output */
+    bool n_flag = get_flag(core->regs, N_MASK);
+    bool c_flag = get_flag(core->regs, CY_MASK);
+    bool h_flag = get_flag(core->regs, H_MASK);
+
+    // note: assumes a is a uint8_t and wraps from 0xff to 0
+    if (!n_flag) { // after an addition, adjust if (half-)carry occurred or if
+                   // result is out of bounds
+      if (c_flag || rv > 0x99) {
+        rv += 0x60;
+        set_flag(core->regs, CY_MASK, true);
+      }
+      if (h_flag || (rv & 0x0f) > 0x09)
+        rv += 0x6;
+
+    } else { // after rv subtraction, only adjust if (half-)carry occurred
+      if (c_flag)
+        rv -= 0x60;
+
+      if (h_flag)
+        rv -= 0x6;
+    }
+    set_all_flags(core->regs, check_zero(rv), n_flag, false, 3);
+    set_reg(core->regs, _A, rv);
   }
 }
-// let mut num_to_conv : u8 = self.regs[instruction.nib2 as usize];
-
-// let multiplier : i16 = 10;
-// for i in 0..3 {
-//     let dec_place : u8  = (num_to_conv as i16 % multiplier) as u8;
-//     self.mem.write8((self.ireg + (2-i as u16)) as usize, dec_place);
-//     num_to_conv /= 10;
-// }
 
 /* Jumps to a relative address, between -128 & 127 */
 void jump_relative(cpu *core, instruction i, int8_t offset) {
   core->regs->pc += offset;
+}
+
+void cc_jump_relative(cpu *core, instruction i, uint8_t mask, bool set) {
+  /* if ~SET and mask is not on or SET and mask is on, jump*/
+  if ((!set & !get_flag(core->regs, mask) ||
+       set & get_flag(core->regs, mask))) {
+    set_instruction_vars(core, &i, 2, 12);
+    jump_relative(core, i, (int8_t)i.full_opcode[1]);
+  } else
+    set_instruction_vars(core, &i, 2, 8);
 }
 
 /* Puts the cpu into low power mode
@@ -364,12 +399,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   /* 0x20 - 0x2f */
   /***************/
   case 0x20: /* JR NZ nn */
-    if (!get_flag(core->regs, Z_MASK)) {
-      /* Jump if the Z flag is not set */
-      set_instruction_vars(core, &out, 2, 12);
-      jump_relative(core, out, (int8_t)out.full_opcode[1]);
-    } else
-      set_instruction_vars(core, &out, 2, 8);
+    cc_jump_relative(core, out, Z_MASK, false);
     break;
   case 0x21: /* LD HL, 16 => 0x21nnnn */
     set_instruction_vars(core, &out, 3, 12);
@@ -398,6 +428,13 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x27: /* DAA */
     set_instruction_vars(core, &out, 1, 4);
     load_reg(core, out, _, _H, __);
+    break;
+  case 0x28: /* JR NZ nn */
+    cc_jump_relative(core, out, Z_MASK, true);
+    break;
+  case 0x29: /* ADD HL, BC */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _, _, _HL, _HL);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

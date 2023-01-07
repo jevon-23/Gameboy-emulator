@@ -19,6 +19,23 @@ TEST(newInstructionTest, newInstruction) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
 
+TEST(daaTest, daa) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* Check add */
+    /* Ld b = 0xbe */
+    /* set_reg(c->regs, _B, 0xbe); */
+    mem_write8(c->mem, c->regs->pc, 0x06); /* Load B = 0xde */
+    mem_write8(c->mem, c->regs->pc+1, 0xde); 
+    mem_write8(c->mem, c->regs->pc+2, 0x04); /* Increase B + 1 */
+    mem_write8(c->mem, c->regs->pc+3, 0x27); /* daa */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xde +1);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+    EXPECT_EQ(*c->regs->a, (uint8_t) (0xde + 1 + 0x60 + 0x6));
+}
+
 TEST(jumpRelativeTest, jumpRelative) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -38,7 +55,7 @@ TEST(jumpRelativeTest, jumpRelative) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 6);
 
     uint16_t new_pc = c->regs->pc;
-    /* jr cc nn => jump if cc is set */
+    /* jr cc nn => dont jump if cc is set */
     set_flag(c->regs, Z_MASK, true);
     mem_write8(c->mem, c->regs->pc, 0x20); /* jump relative */
     mem_write8(c->mem, c->regs->pc+1, 0xff); /* nn */
@@ -47,9 +64,28 @@ TEST(jumpRelativeTest, jumpRelative) {
     EXPECT_EQ(c->regs->pc, new_pc + 3);
 
     new_pc = c->regs->pc;
-    /* jr cc nn => jump if cc is set */
+    /* jr cc nn => jump if cc is not set */
     set_flag(c->regs, Z_MASK, false);
     mem_write8(c->mem, c->regs->pc, 0x20); /* jump relative */
+    mem_write8(c->mem, c->regs->pc+1, 0x30); /* nn */
+    mem_write8(c->mem, c->regs->pc+2, 0x00); /* end */
+    mem_write8(c->mem, c->regs->pc+1 + 0x30, 0x00); /* end */
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, new_pc + 0x30 + 3);
+
+    new_pc = c->regs->pc;
+    /* jr cc nn => dont jump if cc is not set */
+    set_flag(c->regs, Z_MASK, false);
+    mem_write8(c->mem, c->regs->pc, 0x28); /* jump relative */
+    mem_write8(c->mem, c->regs->pc+1, 0xff); /* nn */
+    mem_write8(c->mem, c->regs->pc+2, 0x00); /* end */
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, new_pc + 3);
+
+    new_pc = c->regs->pc;
+    /* jr cc nn => jump if cc is set */
+    set_flag(c->regs, Z_MASK, true);
+    mem_write8(c->mem, c->regs->pc, 0x28); /* jump relative */
     mem_write8(c->mem, c->regs->pc+1, 0x30); /* nn */
     mem_write8(c->mem, c->regs->pc+2, 0x00); /* end */
     mem_write8(c->mem, c->regs->pc+1 + 0x30, 0x00); /* end */
