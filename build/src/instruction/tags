@@ -1,0 +1,21 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+add_reg	instruction.c	/^void add_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f
+check_carry8_shift	instruction.c	/^bool check_carry8_shift(uint8_t v1, bool left_shift) {$/;"	f
+check_half_carry16	instruction.c	/^bool check_half_carry16(uint16_t v1, uint16_t v2, bool is_add) {$/;"	f
+check_half_carry8	instruction.c	/^bool check_half_carry8(uint8_t v1, uint8_t v2, bool is_add) {$/;"	f
+check_zero	instruction.c	/^bool check_zero(uint16_t v) { return v == 0; }$/;"	f
+dec_adj_accumulator	instruction.c	/^void dec_adj_accumulator(cpu *core, instruction i) {$/;"	f
+exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *core, uint8_t opcode) {$/;"	f
+jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
+load_reg	instruction.c	/^void load_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f
+noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
+set_instruction_vars	instruction.c	/^void set_instruction_vars(cpu *core, instruction *i, uint8_t len,$/;"	f
+shift_reg	instruction.c	/^void shift_reg(cpu *core, instruction i, enum reg_enum reg, bool left_shift) {$/;"	f
+stack_pop_i	instruction.c	/^void stack_pop_i(cpu *core, instruction i, enum reg_pairs pair) {$/;"	f
+stop_cpu	instruction.c	/^void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }$/;"	f
+sub_reg	instruction.c	/^void sub_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f

@@ -42,6 +42,26 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /* Helper functionality for opcodes */
 /************************************/
 
+void check_daa(cpu *core, uint8_t rv) {
+  if (mem_read8(core->mem, core->regs->pc) == 0x27) {
+    core->regs->pc++;
+    /* Binary decode the output */
+  }
+}
+// let mut num_to_conv : u8 = self.regs[instruction.nib2 as usize];
+
+// let multiplier : i16 = 10;
+// for i in 0..3 {
+//     let dec_place : u8  = (num_to_conv as i16 % multiplier) as u8;
+//     self.mem.write8((self.ireg + (2-i as u16)) as usize, dec_place);
+//     num_to_conv /= 10;
+// }
+
+/* Jumps to a relative address, between -128 & 127 */
+void jump_relative(cpu *core, instruction i, int8_t offset) {
+  core->regs->pc += offset;
+}
+
 /* Puts the cpu into low power mode
  * TODO: stop the system clock? */
 void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }
@@ -110,12 +130,14 @@ void sub_reg(cpu *core, instruction i, enum reg_enum src_reg,
     set_all_flags(core->regs, check_zero(sub_result.rv), true,
                   check_half_carry8(*r1, 1, false), 2);
     set_reg(core->regs, src_reg, sub_result.rv);
+    check_daa(core, sub_result.rv);
   }
 }
 
 void add_reg(cpu *core, instruction i, enum reg_enum src_reg,
              enum reg_enum dst_reg, enum reg_pairs src_pair,
              enum reg_pairs dst_pair) {
+  core->valid_daa = true;
   /* (1) 16-bit add instructions */
   uint16_t r_src_pair = __;
   if (src_pair != __) {
@@ -135,6 +157,7 @@ void add_reg(cpu *core, instruction i, enum reg_enum src_reg,
     set_all_flags(core->regs, 2, false,
                   check_half_carry16(r_src_pair, r_dst_pair, true),
                   add_result.over_flow);
+    return;
   }
 
   /* (2) 8 Bit add instructions */
@@ -144,6 +167,7 @@ void add_reg(cpu *core, instruction i, enum reg_enum src_reg,
     set_all_flags(core->regs, check_zero(add_result.rv), false,
                   check_half_carry8(*r1, 1, true), 2);
     set_reg(core->regs, src_reg, add_result.rv);
+    check_daa(core, add_result.rv);
   }
 }
 
@@ -211,9 +235,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 3, 12);
     load_reg(core, out, _, _, _BC);
     break;
-  case 0x02: /* LD BC, A => 0x02 */
+  case 0x02: /* LD A, (BC) */
     set_instruction_vars(core, &out, 1, 8);
-    load_reg(core, out, _A, _, _BC);
+    load_reg(core, out, _, _A, _BC);
     break;
   case 0x03: /* INC BC */
     set_instruction_vars(core, &out, 1, 8);
@@ -243,9 +267,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4);
     add_reg(core, out, _, _, _HL, _BC);
     break;
-  case 0x0a: /* ADD HL, BC */
+  case 0x0a: /* LD BC, A => 0x02 */
     set_instruction_vars(core, &out, 1, 8);
-    load_reg(core, out, _, _A, _BC);
+    load_reg(core, out, _A, _, _BC);
     break;
   case 0x0b: /* DEC BC */
     set_instruction_vars(core, &out, 1, 8);
@@ -263,7 +287,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 2, 8);
     load_reg(core, out, _, _C, __);
     break;
-  case 0x0f: /* RLCA */
+  case 0x0f: /* RRCA */
     set_instruction_vars(core, &out, 1, 4);
     shift_reg(core, out, _A, false);
     break;
@@ -279,9 +303,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 3, 12);
     load_reg(core, out, _, _, _DE);
     break;
-  case 0x12: /* LD DE, A => 0x12 */
+  case 0x12: /* LD A, (DE) */
     set_instruction_vars(core, &out, 1, 8);
-    load_reg(core, out, _A, _, _DE);
+    load_reg(core, out, _, _A, _DE);
     break;
   case 0x13: /* INC DE */
     set_instruction_vars(core, &out, 1, 8);
@@ -302,6 +326,78 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x17: /* RLA */
     set_instruction_vars(core, &out, 1, 4);
     shift_reg(core, out, _A, true);
+    break;
+  case 0x18: /* JR nn: Jump relative on signed offset */
+    set_instruction_vars(core, &out, 2, 12);
+    jump_relative(core, out, (int8_t)out.full_opcode[1]);
+    break;
+  case 0x19: /* ADD HL, BC */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _, _, _HL, _DE);
+    break;
+  case 0x1a: /* LD DE, A => 0x12 */
+    set_instruction_vars(core, &out, 1, 8);
+    load_reg(core, out, _A, _, _DE);
+    break;
+  case 0x1b: /* DEC BC */
+    set_instruction_vars(core, &out, 1, 8);
+    sub_reg(core, out, _1, _, _DE, __);
+    break;
+  case 0x1c: /* INC E */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _E, _1, __, __);
+    break;
+  case 0x1d: /* DEC E */
+    set_instruction_vars(core, &out, 1, 4);
+    sub_reg(core, out, _E, _1, __, __);
+    break;
+  case 0x1e: /* LD E, d8 => 0x06nn */
+    set_instruction_vars(core, &out, 2, 8);
+    load_reg(core, out, _, _E, __);
+    break;
+  case 0x1f: /* RRA */
+    set_instruction_vars(core, &out, 1, 4);
+    shift_reg(core, out, _A, false);
+    break;
+
+  /***************/
+  /* 0x20 - 0x2f */
+  /***************/
+  case 0x20: /* JR NZ nn */
+    if (!get_flag(core->regs, Z_MASK)) {
+      /* Jump if the Z flag is not set */
+      set_instruction_vars(core, &out, 2, 12);
+      jump_relative(core, out, (int8_t)out.full_opcode[1]);
+    } else
+      set_instruction_vars(core, &out, 2, 8);
+    break;
+  case 0x21: /* LD HL, 16 => 0x21nnnn */
+    set_instruction_vars(core, &out, 3, 12);
+    load_reg(core, out, _, _, _HL);
+    break;
+  case 0x22: /* LD HL, A && HL++ => 0x22 */
+    set_instruction_vars(core, &out, 1, 8);
+    load_reg(core, out, _, _A, _HL);
+    add_reg(core, out, _1, _, _HL, __);
+    break;
+  case 0x23: /* INC HL */
+    set_instruction_vars(core, &out, 1, 8);
+    add_reg(core, out, _1, _, _HL, __);
+    break;
+  case 0x24: /* INC H */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _H, _1, __, __);
+    break;
+  case 0x25: /* DEC H */
+    set_instruction_vars(core, &out, 1, 4);
+    sub_reg(core, out, _H, _1, __, __);
+  case 0x26: /* LD H, d8 => 0x06nn */
+    set_instruction_vars(core, &out, 2, 8);
+    load_reg(core, out, _, _H, __);
+    break;
+  case 0x27: /* DAA */
+    set_instruction_vars(core, &out, 1, 4);
+    load_reg(core, out, _, _H, __);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

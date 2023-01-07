@@ -13,6 +13,7 @@ cpu *new_cpu(memory *m) {
   out->regs = new_registers();
   out->stack = new_stack();
   out->state = _RUNNING;
+  out->valid_daa = false;
 
   /* Set the regiseters */
   out->regs->pc = GAME_ROM_BANK_0_START;
@@ -86,8 +87,9 @@ void run_cpu(cpu *core) {
     return;
 
   /* decode & execute */
-  instruction i = exec_next_instruction(core, opcode);
-  printf("Opcode executed: %x\n", i.opcode);
+  exec_next_instruction(core, opcode);
+  // instruction i = exec_next_instruction(core, opcode);
+  // printf("Opcode executed: %x\n", i.opcode);
 }
 
 /**************************/
@@ -168,6 +170,8 @@ void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val) {
     exit(-1);
   }
 }
+
+bool get_flag(registers *reg, uint8_t mask) { return reg->flag & mask; }
 
 /* Each flag is only one bit. if set == true
  * => Our flag == our bit being on => (mask * set) = mask

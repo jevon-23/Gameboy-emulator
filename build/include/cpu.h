@@ -33,6 +33,7 @@ typedef struct cpu {
   registers *regs;
   stack *stack;
   enum STATE state;
+  bool valid_daa;
 } cpu;
 
 /* CPU struct functions */
@@ -58,6 +59,7 @@ uint16_t get_reg_pair(registers *regs, enum reg_pairs pair);
 void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val);
 void set_flag(registers *reg, uint8_t mask, bool set);
 void set_all_flags(registers *reg, int z, int n, int h, int cy);
+bool get_flag(registers *reg, uint8_t mask); 
 
 void run_cpu_loop(cpu *core);
 void run_cpu(cpu *core);
