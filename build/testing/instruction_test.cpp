@@ -19,6 +19,23 @@ TEST(newInstructionTest, newInstruction) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
 
+TEST(CPLTest, CPL) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* Load BC Test */
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc+1, 0xbe);
+    mem_write8(c->mem, c->regs->pc+2, 0xef);
+    /* Load from address @ reg pair register into A reg */
+    mem_write8(c->mem, 0xbeef, 0xaf);
+    mem_write8(c->mem, c->regs->pc+3, 0x0A); /* Load *(BC), A */
+    mem_write8(c->mem, c->regs->pc+4, 0x2f); /* A = ~A */
+    mem_write8(c->mem, c->regs->pc+5, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
+    EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _BC)), 0xaf);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), (uint8_t) ~0xaf);
+}
 TEST(daaTest, daa) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -161,7 +178,7 @@ TEST(loadA_addyTest, loadA_addy) {
     /* Load A into memory */
     set_reg(c->regs, _A, 0xaf);
     set_reg_pair(c->regs, _BC, 0xbeef);
-    mem_write8(c->mem, c->regs->pc, 0x2); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x02); /* load BC nnnn */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
@@ -238,13 +255,19 @@ TEST(loadStack16Test, loadStack16) {
     cpu *c = new_cpu(m);
     stack_push(c->stack, 0xbeef);
     /* ld BC, nnnn => 0x01nnnn */
-    mem_write8(c->mem, c->regs->pc, 0x08); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x08); /* load SP (a16) */
     mem_write8(c->mem, c->regs->pc+1, 0xde);
     mem_write8(c->mem, c->regs->pc+2, 0xad);
     mem_write8(c->mem, c->regs->pc+3, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(mem_read16(c->mem, 0xdead), 0xefbe);
     EXPECT_EQ(stack_peak(c->stack), 0xbeef);
+
+    mem_write8(c->mem, c->regs->pc, 0x31);
+    mem_write8(c->mem, c->regs->pc+1, 0x20);
+    mem_write8(c->mem, c->regs->pc+2, 0x01);
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_peak(c->stack), 0x2001);
 }
 
 TEST(shiftLeftTest, shiftLeft) {

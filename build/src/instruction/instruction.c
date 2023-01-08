@@ -211,6 +211,14 @@ void load_reg(cpu *core, instruction i, enum reg_enum src_reg,
               enum reg_enum dst_reg, enum reg_pairs pair) {
   /* (1) Doing a load with a pair */
   if (pair != __) {
+    if (pair == _SP) {
+      /* Loading nn into stack pointer */
+      uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+      if (!stack_push(core->stack, nn)) {
+        printf("Stack overflow!\n");
+        exit(-1);
+      }
+    }
     if (src_reg == _ && dst_reg == _) {
       /* (1.1) Loading nn into pair */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
@@ -370,7 +378,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4);
     add_reg(core, out, _, _, _HL, _DE);
     break;
-  case 0x1a: /* LD DE, A => 0x12 */
+  case 0x1a: /* LD A, DE => 0x1a */
     set_instruction_vars(core, &out, 1, 8);
     load_reg(core, out, _A, _, _DE);
     break;
@@ -435,6 +443,57 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x29: /* ADD HL, BC */
     set_instruction_vars(core, &out, 1, 4);
     add_reg(core, out, _, _, _HL, _HL);
+    break;
+  case 0x2a: /* LD A, HL++ => 0x2a */
+    set_instruction_vars(core, &out, 1, 8);
+    load_reg(core, out, _A, _, _HL);
+    add_reg(core, out, _1, _, _HL, __);
+    break;
+  case 0x2b: /* DEC HL */
+    set_instruction_vars(core, &out, 1, 8);
+    sub_reg(core, out, _1, _, _HL, __);
+    break;
+  case 0x2c: /* INC L */
+    set_instruction_vars(core, &out, 1, 4);
+    add_reg(core, out, _L, _1, __, __);
+    break;
+  case 0x2d: /* DEC L */
+    set_instruction_vars(core, &out, 1, 4);
+    sub_reg(core, out, _L, _1, __, __);
+    break;
+  case 0x2e: /* LD L, d8 => 0x06nn */
+    set_instruction_vars(core, &out, 2, 8);
+    load_reg(core, out, _, _L, __);
+    break;
+  case 0x2f: /* CPL */
+    set_instruction_vars(core, &out, 1, 4);
+    /* Get 1s complement of A register */
+    uint8_t a_comp = ~(*(get_reg(core->regs, _A)));
+    set_reg(core->regs, _A, a_comp);
+    set_all_flags(core->regs, 2, true, true, 2);
+    break;
+
+    /***************/
+    /* 0x30 - 0x3f */
+    /***************/
+  case 0x30: /* JR NC nn */
+    cc_jump_relative(core, out, CY_MASK, false);
+    break;
+  case 0x31: /* LD SP nn */
+    set_instruction_vars(core, &out, 3, 12);
+    load_reg(core, out, _, _, _SP);
+    break;
+  case 0x32: /* LD HL, A && HL-- => 0x22 */
+    set_instruction_vars(core, &out, 1, 8);
+    load_reg(core, out, _, _A, _HL);
+    sub_reg(core, out, _1, _, _HL, __);
+    break;
+  case 0x33: /* INC SP */
+    set_instruction_vars(core, &out, 1, 8);
+    core->regs->sp++;
+    break;
+  case 0x34:
+    set_instruction_vars(core, &out, 1, 12);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

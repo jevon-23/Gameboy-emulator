@@ -149,6 +149,8 @@ uint16_t get_reg_pair(registers *regs, enum reg_pairs pair) {
     return get_de(regs);
   case _HL:
     return get_hl(regs);
+  case _SP:
+    return 0;
   default:
     printf("invalid register passed in\n");
     exit(-1);
@@ -165,6 +167,8 @@ void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val) {
     return set_de(regs, val);
   case _HL:
     return set_hl(regs, val);
+  case _SP:
+    return;
   default:
     printf("invalid register passed in to pair\n");
     exit(-1);

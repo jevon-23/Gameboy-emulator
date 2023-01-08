@@ -21,7 +21,7 @@ typedef struct registers {
   uint8_t flag; /* ZNHC.... */
 } registers;
 
-enum reg_pairs {_AF, _BC, _DE, _HL, __};
+enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};
 
 enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };
 
