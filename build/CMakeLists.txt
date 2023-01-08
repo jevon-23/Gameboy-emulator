@@ -19,6 +19,7 @@ set(SOURCES
 
 # Add an executable with the above sources
 add_executable(gb ${SOURCES})
+add_compile_options(-g)
 
 # Specify Example's link libraries
 target_link_libraries(gb

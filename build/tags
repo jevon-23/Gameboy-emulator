@@ -9924,12 +9924,12 @@ _	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e
 _	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^const internal::AnythingMatcher _ = {};$/;"	m	namespace:testing
 _1	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _A	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
-_AF	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	e	enum:reg_pairs
+_AF	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 _B	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
-_BC	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	e	enum:reg_pairs
+_BC	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 _C	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _D	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
-_DE	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	e	enum:reg_pairs
+_DE	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 _E	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _F	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _GetChildren	testing/googletest/googletest/test/gtest_xml_test_utils.py	/^  def _GetChildren(self, element):$/;"	m	class:GTestXMLTestCase
@@ -9940,11 +9940,12 @@ _GetXmlOutput	testing/googletest/googletest/test/gtest_xml_output_unittest.py-e	
 _GetXmlOutput	testing/googletest/googletest/test/gtest_xml_output_unittest.py-e-e	/^  def _GetXmlOutput(self, gtest_prog_name, extra_args, extra_env,$/;"	m	class:GTestXMLOutputUnitTest
 _H	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _HAS_EXCEPTIONS	testing/googletest/googletest/include/gtest/internal/gtest-port.h	/^#   define _HAS_EXCEPTIONS /;"	d
-_HL	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	e	enum:reg_pairs
+_HL	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 _L	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	e	enum:reg_enum
 _ParseAndStripGTestFlags	testing/googletest/googletest/test/gtest_test_utils.py	/^def _ParseAndStripGTestFlags(argv):$/;"	f
 _RUNNING	include/cpu.h	/^enum STATE {_STOP, _RUNNING };$/;"	e	enum:STATE
 _RemoveTempDir	testing/googletest/googletest/test/gtest_test_utils.py	/^def _RemoveTempDir():$/;"	f
+_SP	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 _STOP	include/cpu.h	/^enum STATE {_STOP, _RUNNING };$/;"	e	enum:STATE
 _TestJsonOutput	testing/googletest/googletest/test/googletest-json-output-unittest.py	/^  def _TestJsonOutput(self, gtest_prog_name, expected,$/;"	m	class:GTestJsonOutputUnitTest
 _TestOutFile	testing/googletest/googletest/test/googletest-json-outfiles-test.py	/^  def _TestOutFile(self, test_name, expected):$/;"	m	class:GTestJsonOutFilesTest
@@ -9958,7 +9959,7 @@ _TestXmlOutput	testing/googletest/googletest/test/gtest_xml_output_unittest.py-e
 _VerifyTestCasesDoNotInterleave	testing/googletest/googletest/test/googletest-shuffle-test.py	/^  def _VerifyTestCasesDoNotInterleave(self, tests):$/;"	m	class:GTestShuffleUnitTest
 _VerifyTestCasesDoNotInterleave	testing/googletest/googletest/test/googletest-shuffle-test.py-e	/^  def _VerifyTestCasesDoNotInterleave(self, tests):$/;"	m	class:GTestShuffleUnitTest
 _VerifyTestCasesDoNotInterleave	testing/googletest/googletest/test/googletest-shuffle-test.py-e-e	/^  def _VerifyTestCasesDoNotInterleave(self, tests):$/;"	m	class:GTestShuffleUnitTest
-__	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	e	enum:reg_pairs
+__	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	e	enum:reg_pairs
 __has_include	testing/googletest/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c	/^#  define __has_include(/;"	d	file:
 __has_include	testing/googletest/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^#  define __has_include(/;"	d	file:
 __init__	testing/googletest/googletest/test/gtest_test_utils.py	/^  def __init__(self, command, working_dir=None, capture_stderr=True, env=None):$/;"	m	class:Subprocess
@@ -9993,7 +9994,7 @@ ad_hoc_test_result	testing/googletest/googletest/src/gtest-internal-inl.h	/^  co
 ad_hoc_test_result	testing/googletest/googletest/src/gtest.cc	/^const TestResult& UnitTest::ad_hoc_test_result() const {$/;"	f	class:testing::UnitTest
 ad_hoc_test_result_	testing/googletest/googletest/include/gtest/gtest.h	/^  TestResult ad_hoc_test_result_;$/;"	m	class:testing::TestSuite
 ad_hoc_test_result_	testing/googletest/googletest/src/gtest-internal-inl.h	/^  TestResult ad_hoc_test_result_;$/;"	m	class:testing::internal::UnitTestImpl
-add_reg	src/instruction/instruction.c	/^void add_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f
+add_reg	src/instruction/instruction.c	/^void add_reg(cpu *core, instruction i) {$/;"	f
 address_	testing/googletest/googlemock/include/gmock/gmock-actions.h	/^  static T* address_;$/;"	m	class:testing::DefaultValue
 address_	testing/googletest/googlemock/include/gmock/gmock-actions.h	/^T* DefaultValue<T&>::address_ = nullptr;$/;"	m	class:testing::DefaultValue
 adds_	testing/googletest/googletest/src/gtest.cc	/^  size_t adds_, removes_, common_;$/;"	m	class:testing::internal::edit_distance::__anon116::Hunk	file:
@@ -10014,7 +10015,10 @@ any_cast	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^void any
 any_cast	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  friend const T* any_cast(const SampleAnyType* any) {$/;"	f	class:testing::gmock_matchers_test::__anon139::SampleAnyType
 any_cast	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  friend const T* any_cast(const SampleAnyType* any) {$/;"	f	class:testing::gmock_matchers_test::__anon65::SampleAnyType
 any_cast_matcher	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^namespace any_cast_matcher {$/;"	n	namespace:testing::internal
+args	include/instruction.h	/^    arguments args;$/;"	m	struct:instruction
 args_	testing/googletest/googletest/src/gtest-death-test.cc	/^  std::vector<char*> args_;$/;"	m	class:testing::internal::Arguments	file:
+arguments	include/instruction.h	/^typedef struct arguments {$/;"	s
+arguments	include/instruction.h	/^} arguments;$/;"	t	typeref:struct:arguments
 argv	testing/googletest/googletest/src/gtest-death-test.cc	/^  char* const* argv;  \/\/ Command-line arguments for the child's call to exec$/;"	m	struct:testing::internal::ExecDeathTestArgs	file:
 array	testing/googletest/googletest/test/googletest-printers-test.cc	/^  char array[257];$/;"	m	struct:testing::gtest_printers_test::Big	file:
 array_	testing/googletest/googletest/include/gtest/gtest-test-part.h	/^  std::vector<TestPartResult> array_;$/;"	m	class:testing::TestPartResultArray
@@ -10273,6 +10277,8 @@ divider	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  int divide
 divider	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  int divider() const { return divider_; }$/;"	f	class:testing::gmock_matchers_test::__anon65::DivisibleByImpl
 divider_	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  int divider_;$/;"	m	class:testing::gmock_matchers_test::__anon139::DivisibleByImpl	file:
 divider_	testing/googletest/googlemock/test/gmock-matchers_test.cc	/^  int divider_;$/;"	m	class:testing::gmock_matchers_test::__anon65::DivisibleByImpl	file:
+dst_pair	include/instruction.h	/^    enum reg_pairs dst_pair;$/;"	m	struct:arguments	typeref:enum:arguments::reg_pairs
+dst_reg	include/instruction.h	/^    enum reg_enum dst_reg;$/;"	m	struct:arguments	typeref:enum:arguments::reg_enum
 dtor_calls	testing/googletest/googletest/test/gtest_unittest.cc	/^  static int dtor_calls;$/;"	m	struct:ConstructionCounting	file:
 dtor_calls	testing/googletest/googletest/test/gtest_unittest.cc	/^int ConstructionCounting::dtor_calls = 0;$/;"	m	class:ConstructionCounting	file:
 dummy_	testing/googletest/googletest/include/gtest/internal/gtest-internal.h	/^  static bool dummy_;$/;"	m	class:testing::internal::TypeIdHelper
@@ -11054,7 +11060,7 @@ listeners	testing/googletest/googletest/src/gtest-internal-inl.h	/^  TestEventLi
 listeners	testing/googletest/googletest/src/gtest.cc	/^TestEventListeners& UnitTest::listeners() {$/;"	f	class:testing::UnitTest
 listeners_	testing/googletest/googletest/src/gtest-internal-inl.h	/^  TestEventListeners listeners_;$/;"	m	class:testing::internal::UnitTestImpl
 listeners_	testing/googletest/googletest/src/gtest.cc	/^  std::vector<TestEventListener*> listeners_;$/;"	m	class:testing::internal::TestEventRepeater	file:
-load_reg	src/instruction/instruction.c	/^void load_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f
+load_reg	src/instruction/instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
 loc_	testing/googletest/googletest/src/gtest.cc	/^  const CodeLocation loc_;$/;"	m	class:testing::internal::__anon114::FailureTest	file:
 loc_	testing/googletest/googletest/src/gtest.cc	/^  const CodeLocation loc_;$/;"	m	class:testing::internal::__anon40::FailureTest	file:
 location_	testing/googletest/googletest/include/gtest/gtest.h	/^  internal::CodeLocation location_;$/;"	m	class:testing::TestInfo
@@ -11285,6 +11291,7 @@ nan_eq_nan_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^    c
 nan_eq_nan_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^    const bool nan_eq_nan_;$/;"	m	class:testing::internal::FloatingEqMatcher::Impl
 nan_eq_nan_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^  bool nan_eq_nan_;$/;"	m	class:testing::internal::FloatingEq2Matcher
 nan_eq_nan_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^  const bool nan_eq_nan_;$/;"	m	class:testing::internal::FloatingEqMatcher
+new_args	src/instruction/instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f
 new_cpu	src/cpu/cpu.c	/^cpu *new_cpu(memory *m) {$/;"	f
 new_memory	src/mem/mem.c	/^memory *new_memory() {$/;"	f
 new_registers	src/cpu/cpu.c	/^registers *new_registers() {$/;"	f
@@ -11920,7 +11927,7 @@ ref_	testing/googletest/googlemock/include/gmock/gmock-actions.h	/^  T& ref_;$/;
 reference	testing/googletest/googlemock/include/gmock/gmock-spec-builders.h	/^  typedef T& reference;$/;"	t	class:testing::internal::ReferenceOrValueWrapper
 reference	testing/googletest/googletest/include/gtest/internal/gtest-param-util.h	/^  typedef const T& reference;$/;"	t	class:testing::internal::ParamIterator
 reg_enum	include/cpu.h	/^enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };$/;"	g
-reg_pairs	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, __};$/;"	g
+reg_pairs	include/cpu.h	/^enum reg_pairs {_AF, _BC, _DE, _HL, _SP, __};$/;"	g
 regex_	testing/googletest/googletest/include/gtest/gtest-matchers.h	/^  const std::shared_ptr<const RE> regex_;$/;"	m	class:testing::internal::MatchesRegexMatcher
 registered_	testing/googletest/googletest/include/gtest/internal/gtest-internal.h	/^  bool registered_;$/;"	m	class:testing::internal::TypedTestSuitePState
 registered_tests_	testing/googletest/googletest/include/gtest/internal/gtest-internal.h	/^  RegisteredTestsMap registered_tests_;$/;"	m	class:testing::internal::TypedTestSuitePState
@@ -12089,7 +12096,7 @@ shared_resource_	testing/googletest/googletest/test/gtest_unittest.cc	/^  static
 shared_resource_	testing/googletest/googletest/test/gtest_unittest.cc	/^  static const char* shared_resource_;$/;"	m	class:testing::SetUpTestSuiteTest	file:
 shared_resource_	testing/googletest/googletest/test/gtest_unittest.cc	/^const char* SetUpTestCaseTest::shared_resource_ = nullptr;$/;"	m	class:testing::SetUpTestCaseTest	file:
 shared_resource_	testing/googletest/googletest/test/gtest_unittest.cc	/^const char* SetUpTestSuiteTest::shared_resource_ = nullptr;$/;"	m	class:testing::SetUpTestSuiteTest	file:
-shift_reg	src/instruction/instruction.c	/^void shift_reg(cpu *core, instruction i, enum reg_enum reg, bool left_shift) {$/;"	f
+shift_reg	src/instruction/instruction.c	/^void shift_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
 should_die_	testing/googletest/googletest/test/googletest-death-test-test.cc	/^  bool should_die_;$/;"	m	class:__anon82::MayDie	file:
 should_die_	testing/googletest/googletest/test/googletest-death-test-test.cc	/^  bool should_die_;$/;"	m	class:__anon82::TestForDeathTest	file:
 should_die_	testing/googletest/googletest/test/googletest-death-test-test.cc	/^  bool should_die_;$/;"	m	class:__anon8::MayDie	file:
@@ -12131,6 +12138,8 @@ source_text_	testing/googletest/googlemock/include/gmock/gmock-spec-builders.h	/
 sp	include/cpu.h	/^  uint16_t sp;        \/* Stack pointer *\/$/;"	m	struct:registers
 spawned	testing/googletest/googletest/src/gtest-death-test.cc	/^  bool spawned() const { return spawned_; }$/;"	f	class:testing::internal::DeathTestImpl
 spawned_	testing/googletest/googletest/src/gtest-death-test.cc	/^  bool spawned_;$/;"	m	class:testing::internal::DeathTestImpl	file:
+src_pair	include/instruction.h	/^    enum reg_pairs src_pair;$/;"	m	struct:arguments	typeref:enum:arguments::reg_pairs
+src_reg	include/instruction.h	/^    enum reg_enum src_reg;$/;"	m	struct:arguments	typeref:enum:arguments::reg_enum
 ss_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^  ::std::stringstream ss_;$/;"	m	class:testing::StringMatchResultListener
 ss_	testing/googletest/googletest/include/gtest/gtest-message.h	/^  const std::unique_ptr< ::std::stringstream> ss_;$/;"	m	class:testing::Message
 stack	include/cpu.h	/^  stack *stack;$/;"	m	struct:cpu
@@ -12139,7 +12148,7 @@ stack	include/utils.h	/^} stack;$/;"	t	typeref:struct:stack
 stack_is_empty	src/utils/utils.c	/^bool stack_is_empty(stack *s) {$/;"	f
 stack_peak	src/utils/utils.c	/^uint16_t stack_peak(stack *s) {$/;"	f
 stack_pop	src/utils/utils.c	/^uint16_t stack_pop(stack *s) {$/;"	f
-stack_pop_i	src/instruction/instruction.c	/^void stack_pop_i(cpu *core, instruction i, enum reg_pairs pair) {$/;"	f
+stack_pop_i	src/instruction/instruction.c	/^void stack_pop_i(cpu *core, instruction i) {$/;"	f
 stack_push	src/utils/utils.c	/^bool stack_push(stack *s, uint16_t value) {$/;"	f
 stack_trace_depth	testing/googletest/googletest/include/gtest/gtest.h	/^GTEST_DECLARE_int32_(stack_trace_depth);$/;"	v
 stack_trace_depth	testing/googletest/googletest/test/gtest_unittest.cc	/^  int32_t stack_trace_depth;$/;"	m	struct:testing::Flags	file:
@@ -12196,7 +12205,7 @@ string_ref	testing/googletest/googletest/test/googletest-printers-test.cc	/^  st
 string_ref	testing/googletest/googletest/test/googletest-printers-test.cc	/^  string_ref(const char* data, size_t size) : data_(data), size_(size) {}$/;"	f	class:testing::gtest_printers_test::__anon94::string_ref
 string_ref	testing/googletest/googletest/test/googletest-printers-test.cc	/^class string_ref {$/;"	c	namespace:testing::gtest_printers_test::__anon20	file:
 string_ref	testing/googletest/googletest/test/googletest-printers-test.cc	/^class string_ref {$/;"	c	namespace:testing::gtest_printers_test::__anon94	file:
-sub_reg	src/instruction/instruction.c	/^void sub_reg(cpu *core, instruction i, enum reg_enum src_reg,$/;"	f
+sub_reg	src/instruction/instruction.c	/^void sub_reg(cpu *core, instruction i) {$/;"	f
 subprocess	testing/googletest/googletest/test/gtest_test_utils.py	/^import subprocess$/;"	i
 substr_	testing/googletest/googletest/include/gtest/gtest-spi.h	/^  const std::string substr_;$/;"	m	class:testing::internal::SingleFailureChecker
 substring_	testing/googletest/googlemock/include/gmock/gmock-matchers.h	/^  const StringType substring_;$/;"	m	class:testing::internal::HasSubstrMatcher

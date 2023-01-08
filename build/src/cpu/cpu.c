@@ -152,7 +152,7 @@ uint16_t get_reg_pair(registers *regs, enum reg_pairs pair) {
   case _SP:
     return 0;
   default:
-    printf("invalid register passed in\n");
+    printf("invalid register passed in to get pair\n");
     exit(-1);
   }
 }

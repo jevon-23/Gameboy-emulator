@@ -8,6 +8,10 @@ extern "C" {
 #include <unistd.h>
 }
 
+void breakpoint(){
+    return ;
+}
+
 namespace {
 TEST(newInstructionTest, newInstruction) {
     memory *m = new_memory();
@@ -194,6 +198,7 @@ TEST(loadA_addyTest, loadA_addy) {
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xb3);
     EXPECT_EQ(get_reg_pair(c->regs, _DE), 0xbeaf);
     EXPECT_EQ(mem_read8(c->mem, 0xbeaf), 0xb3);
+
 
     /* Load A into memory  and increment HL */
     set_reg(c->regs, _A, 0x06);
