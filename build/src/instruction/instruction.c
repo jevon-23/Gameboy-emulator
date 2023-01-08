@@ -153,16 +153,26 @@ void sub_reg(cpu *core, instruction i) {
 
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
-  enum reg_pairs pair1 = i.args.src_pair;
-  enum reg_pairs pair2 = i.args.dst_pair;
+  enum reg_pairs src_pair = i.args.src_pair;
+  enum reg_pairs dst_pair = i.args.dst_pair;
+
   /* (1) 16-bit sub instructions */
-  uint16_t r_pair1 = __;
-  if (pair1 != __) {
-    /* Inc pair1 by 1 */
-    r_pair1 = get_reg_pair(core->regs, pair1);
+  uint16_t r_src_pair = __;
+  if (src_pair != __) {
+    r_src_pair = get_reg_pair(core->regs, src_pair);
+    if (dst_pair == _ADDY && src_reg == _1) {
+      /* Read the address */
+      uint8_t val = mem_read8(core->mem, r_src_pair);
+      RV8 sub_result = sub_overflow8(val, 1);
+      set_all_flags(core->regs, check_zero(sub_result.rv), true,
+                    check_half_carry8(val, 1, true), 2);
+      mem_write8(core->mem, r_src_pair, sub_result.rv);
+      return;
+    }
+    /* Inc src_pair by 1 */
     if (src_reg == _1) {
-      RV16 sub_result = sub_overflow16(r_pair1, 1);
-      set_reg_pair(core->regs, pair1, sub_result.rv);
+      RV16 sub_result = sub_overflow16(r_src_pair, 1);
+      set_reg_pair(core->regs, src_pair, sub_result.rv);
       return;
     }
   }
@@ -189,14 +199,25 @@ void add_reg(cpu *core, instruction i) {
   if (src_pair != __) {
     r_src_pair = get_reg_pair(core->regs, src_pair);
 
-    /* (1.1) Inc src_pair by 1 */
+    /* (1.1) Inc value stored in address @ src_pair by 1 */
+    if (dst_pair == _ADDY && src_reg == _1) {
+      /* Read the address */
+      uint8_t val = mem_read8(core->mem, r_src_pair);
+      RV8 add_result = add_overflow8(val, 1);
+      set_all_flags(core->regs, check_zero(add_result.rv), false,
+                    check_half_carry8(val, 1, true), 2);
+      mem_write8(core->mem, r_src_pair, add_result.rv);
+      return;
+    }
+
+    /* (1.2) Inc src_pair by 1 */
     if (src_reg == _1) {
       RV16 add_result = add_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, add_result.rv);
       return;
     }
 
-    /* (1.2) Adding 2 reg pairs */
+    /* (1.3) Adding 2 reg pairs */
     uint16_t r_dst_pair = get_reg_pair(core->regs, dst_pair);
     RV16 add_result = add_overflow16(r_src_pair, r_dst_pair);
     set_reg_pair(core->regs, src_pair, add_result.rv);
@@ -222,11 +243,12 @@ void load_reg(cpu *core, instruction i) {
 
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
-  enum reg_pairs pair = i.args.src_pair;
+  enum reg_pairs src_pair = i.args.src_pair;
+  enum reg_pairs dst_pair = i.args.dst_pair;
 
-  /* (1) Doing a load with a pair */
-  if (pair != __) {
-    if (pair == _SP) {
+  /* (1) Doing a load with a src_pair */
+  if (src_pair != __) {
+    if (src_pair == _SP) {
       /* Loading nn into stack pointer */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
       if (!stack_push(core->stack, nn)) {
@@ -235,16 +257,21 @@ void load_reg(cpu *core, instruction i) {
       }
     }
     if (src_reg == _ && dst_reg == _) {
-      /* (1.1) Loading nn into pair */
+      if (dst_pair == _ADDY) {
+        /* Storing nn in *(dst_pair) */
+        uint16_t address = get_reg_pair(core->regs, src_pair);
+        mem_write8(core->mem, address, i.full_opcode[1]);
+      }
+      /* (1.1) Loading nn into src_pair */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
-      set_reg_pair(core->regs, pair, nn);
+      set_reg_pair(core->regs, src_pair, nn);
     } else if (src_reg != _ && dst_reg == _) {
       /* (1.2) Loading a value from address into a register */
-      uint16_t address = get_reg_pair(core->regs, pair);
+      uint16_t address = get_reg_pair(core->regs, src_pair);
       set_reg(core->regs, src_reg, mem_read8(core->mem, address));
     } else {
       /* (1.3) Loading a value a register into an address */
-      uint16_t address = get_reg_pair(core->regs, pair);
+      uint16_t address = get_reg_pair(core->regs, src_pair);
       mem_write8(core->mem, address, *(get_reg(core->regs, dst_reg)));
     }
     return;
@@ -503,7 +530,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x28: /* JR NZ nn */
+  case 0x28: /* JR Z nn */
     cc_jump_relative(core, out, Z_MASK, true);
     break;
   case 0x29: /* ADD HL, HL */
@@ -570,8 +597,28 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 8, args);
     core->regs->sp++;
     break;
-  case 0x34:
-    // set_instruction_vars(core, &out, 1, 12);
+  case 0x34: /* INC *(HL) */
+    args = new_args(_1, _, _HL, _ADDY);
+    set_instruction_vars(core, &out, 1, 8, args);
+    add_reg(core, out);
+    break;
+  case 0x35: /* INC *(HL) */
+    args = new_args(_1, _, _HL, _ADDY);
+    set_instruction_vars(core, &out, 1, 8, args);
+    sub_reg(core, out);
+    break;
+  case 0x36: /* LD *(HL), d8 => 0x36nn */
+    args = new_args(_, _, _HL, _ADDY);
+    set_instruction_vars(core, &out, 2, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x37: /* SCF */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    set_all_flags(core->regs, 3, false, false, CY_MASK);
+    break;
+  case 0x38: /* JR C nn */
+    cc_jump_relative(core, out, CY_MASK, true);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

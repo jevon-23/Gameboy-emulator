@@ -173,6 +173,15 @@ TEST(dec16Test, dec16) {
     mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(get_reg_pair(c->regs, _DE), 0xbeaf-1);
+
+    /* Write some byte to memory */
+    mem_write8(c->mem, 0xfeed, 0xbe);
+    set_reg_pair(c->regs, _HL, 0xfeed); /* Set HL = 0xfeed */
+    mem_write8(c->mem, c->regs->pc, 0x35); /* (*HL)-- */
+    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP */
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read8(c->mem, 0xfeed), (0xbe - 1));
+    EXPECT_EQ(c->regs->flag, N_MASK);
 }
 
 
@@ -310,6 +319,15 @@ TEST(load8Test, load8) {
     mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _C)), 0xef);
+
+    /* Load int address into *HL */
+    set_reg_pair(c->regs, _HL, 0xfeed);
+
+    mem_write8(c->mem, c->regs->pc, 0x36); /* LD *(HL), d8 */
+    mem_write8(c->mem, c->regs->pc+1, 0xda); /* NOOP */
+    mem_write8(c->mem, c->regs->pc+2, 0x00); /* NOOP */
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read8(c->mem, 0xfeed), 0xda);
 }
 
 TEST(dec8Test, dec8) {
@@ -416,6 +434,15 @@ TEST(inc16Test, inc16) {
     mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(get_reg_pair(c->regs, _DE), 0xefbe +1);
+
+    /* Write some byte to memory */
+    mem_write8(c->mem, 0xfeed, 0xbe);
+    set_reg_pair(c->regs, _HL, 0xfeed); /* Set HL = 0xfeed */
+    mem_write8(c->mem, c->regs->pc, 0x34); /* (*HL)++ */
+    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP */
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read8(c->mem, 0xfeed), (0xbe + 1));
+    EXPECT_EQ(c->regs->flag, 0);
 }
 
 TEST(loadBCTest, loadBC) {
