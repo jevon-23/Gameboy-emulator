@@ -277,11 +277,13 @@ void load_reg(cpu *core, instruction i) {
         exit(-1);
       }
     }
+
     if (src_reg == _ && dst_reg == _) {
       if (dst_pair == _ADDY) {
         /* Storing nn in *(dst_pair) */
         uint16_t address = get_reg_pair(core->regs, src_pair);
         mem_write8(core->mem, address, i.full_opcode[1]);
+        return;
       }
       /* (1.1) Loading nn into src_pair */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
@@ -297,9 +299,12 @@ void load_reg(cpu *core, instruction i) {
     }
     return;
   }
-
+  /* Load from src_reg => dst_reg */
+  if (src_reg != _ && dst_reg != _) {
+    set_reg(core->regs, dst_reg, *(get_reg(core->regs, src_reg)));
+  }
   /* (2) Doing a load into variable register */
-  if (src_reg == _) {
+  else if (src_reg == _) {
     /* Loading immediate */
     set_reg(core->regs, dst_reg, i.full_opcode[1]);
   }
@@ -679,6 +684,46 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     /* Flip the carry flag */
     bool ccf = !(get_flag(core->regs, CY_MASK));
     set_all_flags(core->regs, 2, false, false, ccf);
+    break;
+  case 0x40: /* LD B, B */
+    args = new_args(_B, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x41: /* LD B, C */
+    args = new_args(_C, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x42: /* LD B, D */
+    args = new_args(_D, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x43: /* LD B, E */
+    args = new_args(_E, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x44: /* LD B, H */
+    args = new_args(_H, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x45: /* LD B, L */
+    args = new_args(_L, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x46: /* LD B, HL-- => 0x2a */
+    args = new_args(_B, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x47: /* LD B, L */
+    args = new_args(_A, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

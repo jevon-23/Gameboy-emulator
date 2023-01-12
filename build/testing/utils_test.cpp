@@ -30,8 +30,6 @@ TEST(testStackOps, stackOps) {
   EXPECT_EQ(s->max_len, MAX_STACK_LEN); 
   EXPECT_EQ(stack_is_empty(s), true); 
 
-  printf("passed 1\n");
-
   uint16_t one = 0x01;
   uint16_t two = 0x02;
 
@@ -40,26 +38,18 @@ TEST(testStackOps, stackOps) {
   EXPECT_EQ(s->len, 1);
   EXPECT_EQ(stack_is_empty(s), false); 
 
-  printf("passewd 2\n");
-
   EXPECT_EQ(stack_push(s, two), true);
   EXPECT_EQ(stack_peak(s), two);
   EXPECT_EQ(s->len, 2);
   EXPECT_EQ(stack_is_empty(s), false); 
 
-  printf("passed 3\n");
-
   EXPECT_EQ(stack_pop(s), two);
   EXPECT_EQ(s->len, 1);
   EXPECT_EQ(stack_peak(s), one);
-  printf("passed 4\n");
 
   EXPECT_EQ(stack_pop(s), one);
-  printf("pass pop\n");
   EXPECT_EQ(stack_peak(s), 0x00);
-  printf("pass peak\n");
   EXPECT_EQ(stack_is_empty(s), true); 
-  printf("passed all \n");
 
   
 }

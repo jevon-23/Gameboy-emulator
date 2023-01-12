@@ -23,6 +23,44 @@ TEST(newInstructionTest, newInstruction) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
 
+TEST(load828Test, load828) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    /* Load B nn */
+    mem_write8(c->mem, c->regs->pc, 0x06);
+    mem_write8(c->mem, c->regs->pc +1, 0xbe);
+    /* LD B, B */
+    mem_write8(c->mem, c->regs->pc +2, 0x40);
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xbe);
+
+    /* LD C nn */
+    mem_write8(c->mem, c->regs->pc, 0x0e);
+    mem_write8(c->mem, c->regs->pc+1, 0xd0);
+    /* LD B, C */
+    mem_write8(c->mem, c->regs->pc +2, 0x41);
+
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xd0);
+    EXPECT_EQ(*(get_reg(c->regs, _C)), 0xd0);
+
+    /* LD L nn */
+    mem_write8(c->mem, c->regs->pc, 0x2e);
+    mem_write8(c->mem, c->regs->pc+1, 0xed);
+    /* LD B, L */
+    mem_write8(c->mem, c->regs->pc +2, 0x45);
+
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xed);
+    EXPECT_EQ(*(get_reg(c->regs, _L)), 0xed);
+}
+
 TEST(CPLTest, CPL) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -534,5 +572,16 @@ TEST(loadBCTest, loadBC) {
     EXPECT_EQ(get_reg_pair(c->regs, _HL), 0xc0fe -1);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _HL) + 1 ), 0xea);
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xea);
+
+    /* LD *(HL) d8 */
+    mem_write8(c->mem, c->regs->pc, 0x36);
+    mem_write8(c->mem, c->regs->pc + 1, 0xaf);
+
+    /* LD B, *(HL) */
+    mem_write8(c->mem, c->regs->pc +2, 0x46); 
+    mem_write8(c->mem, c->regs->pc + 3, 0x00);
+    EXPECT_NE(*(get_reg(c->regs, _B)), 0xaf);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xaf);
 }
 }
