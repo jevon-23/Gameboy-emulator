@@ -715,13 +715,53 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x46: /* LD B, HL-- => 0x2a */
+  case 0x46: /* LD B, HL */
     args = new_args(_B, _, _HL, __);
     set_instruction_vars(core, &out, 1, 8, args);
     load_reg(core, out);
     break;
-  case 0x47: /* LD B, L */
+  case 0x47: /* LD B, A */
     args = new_args(_A, _B, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x48: /* LD C, B */
+    args = new_args(_B, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x49: /* LD C, C */
+    args = new_args(_C, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4A: /* LD C, D */
+    args = new_args(_D, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4B: /* LD C, E */
+    args = new_args(_E, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4C: /* LD C, H */
+    args = new_args(_H, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4D: /* LD C, L */
+    args = new_args(_L, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4E: /* LD C, HL */
+    args = new_args(_C, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x4f: /* LD C, A */
+    args = new_args(_A, _C, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;

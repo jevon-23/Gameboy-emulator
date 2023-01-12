@@ -26,21 +26,18 @@ TEST(newInstructionTest, newInstruction) {
 TEST(load828Test, load828) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
-    /* Load B nn */
-    mem_write8(c->mem, c->regs->pc, 0x06);
+    
+    mem_write8(c->mem, c->regs->pc, 0x06); /* Load B nn */
     mem_write8(c->mem, c->regs->pc +1, 0xbe);
-    /* LD B, B */
-    mem_write8(c->mem, c->regs->pc +2, 0x40);
+    mem_write8(c->mem, c->regs->pc +2, 0x40); /* LD B, B */
     /* Test */
     mem_write8(c->mem, c->regs->pc +3, 0x00);
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _B)), 0xbe);
-
-    /* LD C nn */
-    mem_write8(c->mem, c->regs->pc, 0x0e);
+    
+    mem_write8(c->mem, c->regs->pc, 0x0e); /* LD C nn */
     mem_write8(c->mem, c->regs->pc+1, 0xd0);
-    /* LD B, C */
-    mem_write8(c->mem, c->regs->pc +2, 0x41);
+    mem_write8(c->mem, c->regs->pc +2, 0x41); /* LD B, C */
 
     /* Test */
     mem_write8(c->mem, c->regs->pc +3, 0x00);
@@ -48,17 +45,28 @@ TEST(load828Test, load828) {
     EXPECT_EQ(*(get_reg(c->regs, _B)), 0xd0);
     EXPECT_EQ(*(get_reg(c->regs, _C)), 0xd0);
 
-    /* LD L nn */
-    mem_write8(c->mem, c->regs->pc, 0x2e);
+    mem_write8(c->mem, c->regs->pc, 0x2e); /* LD L nn */
     mem_write8(c->mem, c->regs->pc+1, 0xed);
-    /* LD B, L */
-    mem_write8(c->mem, c->regs->pc +2, 0x45);
+    mem_write8(c->mem, c->regs->pc +2, 0x45); /* LD B, L */
 
     /* Test */
     mem_write8(c->mem, c->regs->pc +3, 0x00);
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _B)), 0xed);
     EXPECT_EQ(*(get_reg(c->regs, _L)), 0xed);
+
+    /* Load C, H */
+    mem_write8(c->mem, c->regs->pc, 0x26); /* LD H nn */
+    mem_write8(c->mem, c->regs->pc+1, 0xc0);
+    mem_write8(c->mem, c->regs->pc +2, 0x4C); /* LD C, H */
+
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _C)), 0xc0);
+    EXPECT_EQ(*(get_reg(c->regs, _H)), 0xc0);
+
+
 }
 
 TEST(CPLTest, CPL) {
