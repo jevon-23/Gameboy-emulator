@@ -32,6 +32,10 @@ bool stack_is_empty(stack *s);
 bool stack_push(stack *s, uint16_t value);
 uint16_t stack_pop(stack *s);
 uint16_t stack_peak(stack *s);
+uint16_t *get_stack_pointer(stack *s);
+void set_stack_pointer(stack *s, uint16_t val);
+
+
 
 uint8_t conv16_to8(uint16_t u, bool want_hi);
 uint16_t conv8_to16(uint8_t u1, uint8_t u2);

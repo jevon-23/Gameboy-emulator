@@ -95,10 +95,29 @@ bool stack_push(stack *s, uint16_t value) {
   return true;
 }
 
-uint16_t stack_peak(stack *s) {
+/* Returns back a the current pointer of the stack pointer */
+uint16_t *get_stack_pointer(stack *s) {
   if (stack_is_empty(s))
-    return 0;
-  return s->data[s->len - 1];
+    return NULL;
+  return (s->data + (s->len - 1));
+}
+
+void set_stack_pointer(stack *s, uint16_t val) {
+  uint16_t *sp = get_stack_pointer(s);
+  if (sp == NULL) {
+    printf("Could not set stack pointer, need to allocate space\n");
+    exit(-1);
+  }
+  /* Update the stack pointer */
+  *sp = val;
+}
+
+/* Peaks at the top of the stack */
+uint16_t stack_peak(stack *s) {
+  uint16_t *out = get_stack_pointer(s);
+  if (out == NULL)
+    return 0x00;
+  return *out;
 }
 
 uint16_t stack_pop(stack *s) {

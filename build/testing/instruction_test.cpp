@@ -39,6 +39,17 @@ TEST(CPLTest, CPL) {
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _BC)), 0xaf);
     EXPECT_EQ(*(get_reg(c->regs, _A)), (uint8_t) ~0xaf);
+
+    /* Flip the carry flag */
+    mem_write8(c->mem, c->regs->pc, 0x3f);
+    mem_write8(c->mem, c->regs->pc+1, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+    /* Flip the carry flag */
+    mem_write8(c->mem, c->regs->pc, 0x3f);
+    mem_write8(c->mem, c->regs->pc+1, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->flag, 0x00);
 }
 TEST(daaTest, daa) {
     memory *m = new_memory();
@@ -262,6 +273,17 @@ TEST(addRegPairTest, addRegPair) {
     EXPECT_EQ(get_reg_pair(c->regs, _DE), 0x0605);
     EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x9028);
     EXPECT_EQ(c->regs->flag, H_MASK);
+
+    /* HL + SP */
+    mem_write8(c->mem, c->regs->pc, 0x31); /* LD SP, nnnn */
+    mem_write8(c->mem, c->regs->pc +1, 0x20);
+    mem_write8(c->mem, c->regs->pc +2, 0x01);
+    mem_write8(c->mem, c->regs->pc +3, 0x39); /* HL + SP */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* NOOP */
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_peak(c->stack), 0x2001);
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x9028 + 0x2001);
+    EXPECT_EQ(c->regs->flag, 0x00);
 }
 
 TEST(loadStack16Test, loadStack16) {
@@ -282,6 +304,13 @@ TEST(loadStack16Test, loadStack16) {
     mem_write8(c->mem, c->regs->pc+2, 0x01);
     run_cpu_loop(c);
     EXPECT_EQ(stack_peak(c->stack), 0x2001);
+
+    mem_write8(c->mem, c->regs->pc, 0x31);
+    mem_write8(c->mem, c->regs->pc+1, 0xc0);
+    mem_write8(c->mem, c->regs->pc+2, 0xfe);
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_peak(c->stack), 0xc0fe);
+    EXPECT_EQ(c->stack->len, 1);
 }
 
 TEST(shiftLeftTest, shiftLeft) {
@@ -443,6 +472,16 @@ TEST(inc16Test, inc16) {
     run_cpu_loop(c);
     EXPECT_EQ(mem_read8(c->mem, 0xfeed), (0xbe + 1));
     EXPECT_EQ(c->regs->flag, 0);
+
+    /* INC SP */
+  /* Load c0fe into stack pointer */
+  mem_write8(c->mem, c->regs->pc, 0x31);
+  mem_write8(c->mem, c->regs->pc+1, 0xc0);
+  mem_write8(c->mem, c->regs->pc+2, 0xfe);
+  mem_write8(c->mem, c->regs->pc+3, 0x33); /* INC SP */
+  mem_write8(c->mem, c->regs->pc+4, 0x00); /* INC SP */
+  run_cpu_loop(c);
+  EXPECT_EQ(stack_peak(c->stack), 0xc0fe +1);
 }
 
 TEST(loadBCTest, loadBC) {
@@ -468,7 +507,7 @@ TEST(loadBCTest, loadBC) {
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xaf);
 
     /* DE */
-    mem_write8(c->mem, c->regs->pc, 0x11); /* load BC nnnn */
+    mem_write8(c->mem, c->regs->pc, 0x11); /* load de nnnn */
     mem_write8(c->mem, c->regs->pc+1, 0xef);
     mem_write8(c->mem, c->regs->pc+2, 0xbe);
     mem_write8(c->mem, c->regs->pc+3, 0x00); /* NOOP => quit */
@@ -483,5 +522,17 @@ TEST(loadBCTest, loadBC) {
     EXPECT_EQ(get_reg_pair(c->regs, _DE), 0xefbe);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _DE)), 0xad);
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xad);
+
+    /* Load from address @ HL register into A reg, and dec HL */
+    mem_write8(c->mem, 0xc0fe, 0xea);
+    mem_write8(c->mem, c->regs->pc, 0x21); /* Load HL, nn */
+    mem_write8(c->mem, c->regs->pc+1, 0xc0); 
+    mem_write8(c->mem, c->regs->pc+2, 0xfe); 
+    mem_write8(c->mem, c->regs->pc+3, 0x3A); /* Load *(HL--), A */
+    mem_write8(c->mem, c->regs->pc+4, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0xc0fe -1);
+    EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _HL) + 1 ), 0xea);
+    EXPECT_EQ( *(get_reg(c->regs, _A)), 0xea);
 }
 }

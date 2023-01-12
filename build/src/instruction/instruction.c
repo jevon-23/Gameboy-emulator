@@ -157,6 +157,10 @@ void sub_reg(cpu *core, instruction i) {
   enum reg_pairs dst_pair = i.args.dst_pair;
 
   /* (1) 16-bit sub instructions */
+  if (src_pair == _SP && src_reg == _1) {
+    set_stack_pointer(core->stack, stack_peak(core->stack) - 1);
+    return;
+  }
   uint16_t r_src_pair = __;
   if (src_pair != __) {
     r_src_pair = get_reg_pair(core->regs, src_pair);
@@ -167,13 +171,11 @@ void sub_reg(cpu *core, instruction i) {
       set_all_flags(core->regs, check_zero(sub_result.rv), true,
                     check_half_carry8(val, 1, true), 2);
       mem_write8(core->mem, r_src_pair, sub_result.rv);
-      return;
     }
     /* Inc src_pair by 1 */
-    if (src_reg == _1) {
+    else if (src_reg == _1) {
       RV16 sub_result = sub_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, sub_result.rv);
-      return;
     }
   }
   /* (2) 8 Bit sub instructions */
@@ -197,6 +199,23 @@ void add_reg(cpu *core, instruction i) {
   /* (1) 16-bit add instructions */
   uint16_t r_src_pair = __;
   if (src_pair != __) {
+    /* If we are dealing with the stack regiester */
+    if (src_pair == _SP) {
+      // To make this cleaner, should makse core->sp => *(core->sp);
+      if (src_reg == _1)
+        set_stack_pointer(core->stack, stack_peak(core->stack) + 1);
+      else if (dst_pair != __) {
+        uint16_t r_dst_pair = get_reg_pair(core->regs, dst_pair);
+        RV16 add_result = add_overflow16(stack_peak(core->stack), r_dst_pair);
+        set_reg_pair(core->regs, dst_pair, add_result.rv);
+        set_all_flags(core->regs, 2, false,
+                      check_half_carry16(r_src_pair, r_dst_pair, true),
+                      add_result.over_flow);
+      }
+
+      return;
+    }
+
     r_src_pair = get_reg_pair(core->regs, src_pair);
 
     /* (1.1) Inc value stored in address @ src_pair by 1 */
@@ -207,24 +226,21 @@ void add_reg(cpu *core, instruction i) {
       set_all_flags(core->regs, check_zero(add_result.rv), false,
                     check_half_carry8(val, 1, true), 2);
       mem_write8(core->mem, r_src_pair, add_result.rv);
-      return;
     }
 
     /* (1.2) Inc src_pair by 1 */
-    if (src_reg == _1) {
+    else if (src_reg == _1) {
       RV16 add_result = add_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, add_result.rv);
-      return;
+    } else {
+      /* (1.3) Adding 2 reg pairs */
+      uint16_t r_dst_pair = get_reg_pair(core->regs, dst_pair);
+      RV16 add_result = add_overflow16(r_src_pair, r_dst_pair);
+      set_reg_pair(core->regs, src_pair, add_result.rv);
+      set_all_flags(core->regs, 2, false,
+                    check_half_carry16(r_src_pair, r_dst_pair, true),
+                    add_result.over_flow);
     }
-
-    /* (1.3) Adding 2 reg pairs */
-    uint16_t r_dst_pair = get_reg_pair(core->regs, dst_pair);
-    RV16 add_result = add_overflow16(r_src_pair, r_dst_pair);
-    set_reg_pair(core->regs, src_pair, add_result.rv);
-    set_all_flags(core->regs, 2, false,
-                  check_half_carry16(r_src_pair, r_dst_pair, true),
-                  add_result.over_flow);
-    return;
   }
 
   /* (2) 8 Bit add instructions */
@@ -251,6 +267,11 @@ void load_reg(cpu *core, instruction i) {
     if (src_pair == _SP) {
       /* Loading nn into stack pointer */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+      if (!stack_is_empty(core->stack)) {
+        set_stack_pointer(core->stack, nn);
+        return;
+      }
+      /* Allow for push if stack is not allocated */
       if (!stack_push(core->stack, nn)) {
         printf("Stack overflow!\n");
         exit(-1);
@@ -593,9 +614,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     sub_reg(core, out);
     break;
   case 0x33: /* INC SP */
-    args = new_args(_, _, __, __);
+    args = new_args(_1, _, _SP, __);
     set_instruction_vars(core, &out, 1, 8, args);
-    core->regs->sp++;
+    add_reg(core, out);
     break;
   case 0x34: /* INC *(HL) */
     args = new_args(_1, _, _HL, _ADDY);
@@ -619,6 +640,45 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     break;
   case 0x38: /* JR C nn */
     cc_jump_relative(core, out, CY_MASK, true);
+    break;
+  case 0x39: /* INC HL += SP */
+    args = new_args(_, _, _SP, _HL);
+    set_instruction_vars(core, &out, 1, 8, args);
+    add_reg(core, out);
+    break;
+  case 0x3a: /* LD A, HL-- => 0x2a */
+    args = new_args(_A, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    out.args = new_args(_1, _, _HL, __);
+    sub_reg(core, out);
+    break;
+  case 0x3b: /* DEC SP */
+    args = new_args(_1, _, _SP, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    sub_reg(core, out);
+    break;
+  case 0x3c: /* INC A */
+    args = new_args(_A, _1, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x3d: /* DEC A */
+    args = new_args(_A, _1, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x3e: /* LD A, d8 => 0x06nn */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x3f: /* CCF */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    /* Flip the carry flag */
+    bool ccf = !(get_flag(core->regs, CY_MASK));
+    set_all_flags(core->regs, 2, false, false, ccf);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);
