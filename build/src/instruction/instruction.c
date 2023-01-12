@@ -685,6 +685,10 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     bool ccf = !(get_flag(core->regs, CY_MASK));
     set_all_flags(core->regs, 2, false, false, ccf);
     break;
+
+    /***************/
+    /* 0x40 - 0x4f */
+    /***************/
   case 0x40: /* LD B, B */
     args = new_args(_B, _B, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
@@ -735,33 +739,201 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x4A: /* LD C, D */
+  case 0x4a: /* LD C, D */
     args = new_args(_D, _C, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x4B: /* LD C, E */
+  case 0x4b: /* LD C, E */
     args = new_args(_E, _C, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x4C: /* LD C, H */
+  case 0x4c: /* LD C, H */
     args = new_args(_H, _C, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x4D: /* LD C, L */
+  case 0x4d: /* LD C, L */
     args = new_args(_L, _C, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x4E: /* LD C, HL */
+  case 0x4e: /* LD C, HL */
     args = new_args(_C, _, _HL, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
   case 0x4f: /* LD C, A */
     args = new_args(_A, _C, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+
+    /***************/
+    /* 0x50 - 0x5f */
+    /***************/
+  case 0x50: /* LD B, B */
+    args = new_args(_B, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x51: /* LD D, C */
+    args = new_args(_C, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x52: /* LD D, D */
+    args = new_args(_D, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x53: /* LD D, E */
+    args = new_args(_E, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x54: /* LD D, H */
+    args = new_args(_H, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x55: /* LD D, L */
+    args = new_args(_L, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x56: /* LD D, HL */
+    args = new_args(_D, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x57: /* LD D, A */
+    args = new_args(_A, _D, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x58: /* LD E, B */
+    args = new_args(_B, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x59: /* LD E, E */
+    args = new_args(_E, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5a: /* LD E, D */
+    args = new_args(_D, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5b: /* LD E, E */
+    args = new_args(_C, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5c: /* LD E, H */
+    args = new_args(_H, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5d: /* LD E, L */
+    args = new_args(_L, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5e: /* LD E, HL */
+    args = new_args(_E, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x5f: /* LD E, A */
+    args = new_args(_A, _E, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+
+    /***************/
+    /* 0x60 - 0x6f */
+    /***************/
+  case 0x60: /* LD H, B */
+    args = new_args(_B, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x61: /* LD H, C */
+    args = new_args(_C, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x62: /* LD H, D */
+    args = new_args(_D, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x63: /* LD H, E */
+    args = new_args(_E, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x64: /* LD H, H */
+    args = new_args(_H, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x65: /* LD H, L */
+    args = new_args(_L, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x66: /* LD H, HL */
+    args = new_args(_H, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x67: /* LD H, A */
+    args = new_args(_A, _H, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x68: /* LD L, B */
+    args = new_args(_B, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x69: /* LD L, C */
+    args = new_args(_C, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6a: /* LD L, D */
+    args = new_args(_D, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6b: /* LD L, E */
+    args = new_args(_E, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6c: /* LD L, H */
+    args = new_args(_H, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6d: /* LD L, L */
+    args = new_args(_L, _L, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6e: /* LD L, HL */
+    args = new_args(_L, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x6f: /* LD L, A */
+    args = new_args(_A, _L, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
