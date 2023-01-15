@@ -23,6 +23,17 @@ TEST(newInstructionTest, newInstruction) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
 
+TEST (haltTest, halt) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    
+    mem_write8(c->mem, c->regs->pc, 0x76); /* Load B nn */
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu(c);
+    EXPECT_EQ(c->state, _HALTED);
+}
+
 TEST(load828Test, load828) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -317,6 +328,23 @@ TEST(loadA_addyTest, loadA_addy) {
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0x06);
     EXPECT_EQ(get_reg_pair(c->regs, _HL), 0x9999+1);
     EXPECT_EQ(mem_read8(c->mem, 0x9999), 0x06);
+
+    /* Load an address into HL */
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc+1, 0xc0fe);
+    /* Load value into D register to be written to memory */
+    mem_write8(c->mem, c->regs->pc+3, 0x16); /* LD D, d8 */
+    mem_write8(c->mem, c->regs->pc+4, 0x23); 
+
+    /* LD (HL), B */
+    mem_write8(c->mem, c->regs->pc +5, 0x72);
+
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +6, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ( *(get_reg(c->regs, _D)), 0x23);
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0xc0fe);
+    EXPECT_EQ(mem_read8(c->mem, 0xc0fe), 0x23);
 }
 
 TEST(addRegPairTest, addRegPair) {

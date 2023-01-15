@@ -104,6 +104,11 @@ void cc_jump_relative(cpu *core, instruction i, uint8_t mask, bool set) {
  * TODO: stop the system clock? */
 void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }
 
+void halt(cpu *core, instruction i) {
+  core->state = _HALTED;
+  return;
+}
+
 /* Pop from the stack and store it into an address */
 void stack_pop_i(cpu *core, instruction i) {
   enum reg_pairs pair = i.args.src_pair;
@@ -935,6 +940,49 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x6f: /* LD L, A */
     args = new_args(_A, _L, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+    /***************/
+    /* 0x70 - 0x7f */
+    /***************/
+  case 0x70: /* LD HL, B && HL-- => 0x22 */
+    args = new_args(_, _B, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x71: /* LD HL, C && HL-- => 0x22 */
+    args = new_args(_, _C, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x72: /* LD HL, D && HL-- => 0x22 */
+    args = new_args(_, _D, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x73: /* LD HL, E && HL-- => 0x22 */
+    args = new_args(_, _E, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x74: /* LD HL, H && HL-- => 0x22 */
+    args = new_args(_, _H, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x75: /* LD HL, L && HL-- => 0x22 */
+    args = new_args(_, _L, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
+  case 0x76: /* HALT */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    halt(core, out);
+    break;
+  case 0x77: /* LD HL, A && HL-- => 0x22 */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
     load_reg(core, out);
     break;
   default:

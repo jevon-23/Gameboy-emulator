@@ -34,6 +34,7 @@ registers *new_registers() {
   out->h = (out->gp_regs + 6);
   out->l = (out->gp_regs + 7);
   out->flag = 0x00;
+  out->pc = GAME_CODE_BANK_0_START;
   return out;
 }
 
@@ -42,7 +43,10 @@ registers *new_registers() {
 /**********************************/
 
 bool check_low_power(cpu *core, uint8_t opcode) {
-  if (core->state == _STOP)
+  if (core->state == _HALTED)
+    /* TODO: Implement halted */
+    return true;
+  else if (core->state == _STOP)
     /* TODO: Check for reset with opcode */
     return true;
   return false;
@@ -87,9 +91,9 @@ void run_cpu(cpu *core) {
     return;
 
   /* decode & execute */
-  exec_next_instruction(core, opcode);
-  // instruction i = exec_next_instruction(core, opcode);
-  // printf("Opcode executed: %x\n", i.opcode);
+  // exec_next_instruction(core, opcode);
+  instruction i = exec_next_instruction(core, opcode);
+  printf("Opcode executed: %x\n", i.opcode);
 }
 
 /**************************/

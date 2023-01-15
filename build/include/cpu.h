@@ -25,7 +25,7 @@ enum reg_pairs {_AF, _BC, _DE, _HL, _SP, _ADDY, __};
 
 enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };
 
-enum STATE {_STOP, _RUNNING };
+enum STATE {_STOP, _RUNNING, _HALTED };
 
 /* CPU struct */
 typedef struct cpu {
