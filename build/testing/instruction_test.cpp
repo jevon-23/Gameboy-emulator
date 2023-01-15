@@ -120,6 +120,17 @@ TEST(load828Test, load828) {
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _L)), 0x23);
     EXPECT_EQ(*(get_reg(c->regs, _D)), 0x23);
+
+    /* Load A, H */
+    mem_write8(c->mem, c->regs->pc, 0x26); /* LD H nn */
+    mem_write8(c->mem, c->regs->pc+1, 0xd1);
+    mem_write8(c->mem, c->regs->pc +2, 0x7c); /* LD A, H */
+
+    /* Test */
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xd1);
+    EXPECT_EQ(*(get_reg(c->regs, _H)), 0xd1);
 }
 
 TEST(CPLTest, CPL) {

@@ -985,6 +985,46 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 8, args);
     load_reg(core, out);
     break;
+  case 0x78: /* AD A, B */
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x79: /* AD A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7a: /* AD A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7b: /* AD A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7c: /* AD A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7d: /* AD A, A */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7e: /* AD A, HA */
+    args = new_args(_A, _, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
+  case 0x7f: /* AD A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    load_reg(core, out);
+    break;
   default:
     printf("Invalid opcode: %x\n", opcode);
     exit(-1);
