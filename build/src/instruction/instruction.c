@@ -194,32 +194,33 @@ void sub_reg(cpu *core, instruction i) {
   }
 }
 
-bool handle_add_carry2(cpu *core, uint8_t *src) {
+bool handle_add_carry(cpu *core, uint8_t *src) {
   /* If carry flag is not set, don't increment */
   if (!get_flag(core->regs, CY_MASK))
     return false;
-  printf("get flag returned back: %d\n", get_flag(core->regs, CY_MASK));
+
   /* Increment by 1 */
   (*src)++;
-  // *add_result = add_overflow8(temp, 1);
   return true;
 }
 
-bool handle_add_carry(cpu *core, RV8 *add_result) {
-  /* If carry flag is not set, don't increment */
-  if (!get_flag(core->regs, CY_MASK))
-    return false;
-  printf("get flag returned back: %d\n", get_flag(core->regs, CY_MASK));
-  uint8_t temp = add_result->rv;
-  /* Increment by 1 */
-  *add_result = add_overflow8(temp, 1);
-  return true;
+void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
+                     bool is_adc) {
 
-  /* TODO: Do we need to or w/ the previous set flag? */
-  //   set_all_flags(core->regs, check_zero(add_result->rv), 0,
-  //                 check_half_carry8(temp, 1, true) | get_flag(core->regs,
-  //                 H_MASK), add_result->over_flow | get_flag(core->regs,
-  //                 CY_MASK));
+  /* 8 bit r1 r2 add */
+  uint8_t src = og_src;
+  uint8_t *dst = get_reg(core->regs, dst_reg);
+
+  if (is_adc)
+    handle_add_carry(core, &src);
+
+  RV8 add_result = add_overflow8(*dst, src);
+  set_all_flags(core->regs, check_zero(add_result.rv), 0,
+                check_half_carry8(*dst, og_src, true) |
+                    check_half_carry8(*dst, src, true),
+                add_result.over_flow);
+  set_reg(core->regs, dst_reg, add_result.rv);
+  check_daa(core, add_result.rv);
 }
 
 void add_reg(cpu *core, instruction i) {
@@ -254,35 +255,19 @@ void add_reg(cpu *core, instruction i) {
 
     /* (1.1) Inc value stored in address @ src_pair by 1 */
     if (dst_pair == _ADDY && src_reg == _1) {
-      /* Read the address */
-      uint8_t val = mem_read8(core->mem, r_src_pair);
+      uint8_t val = mem_read8(core->mem, r_src_pair); /* Read addy */
       RV8 add_result = add_overflow8(val, 1);
       set_all_flags(core->regs, check_zero(add_result.rv), false,
                     check_half_carry8(val, 1, true), 2);
-      mem_write8(core->mem, r_src_pair, add_result.rv);
-    }
-
-    /* (1.2) Inc src_pair by 1 */
-    else if (src_reg == _1) {
+      mem_write8(core->mem, r_src_pair, add_result.rv); /* Store back */
+    } else if (src_reg == _1) {
+      /* (1.2) Inc src_pair by 1 */
       RV16 add_result = add_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, add_result.rv);
     } else if (dst_reg != _) {
       /* Adding a pair to a reg, and storing in reg */
-      uint8_t og_src_val = mem_read8(core->mem, r_src_pair);
-      uint8_t src_val = og_src_val;
-      uint8_t *dst = get_reg(core->regs, dst_reg);
-
-      /* Need to set values for carry check before exec */
-      if (is_adc)
-        handle_add_carry2(core, &src_val);
-
-      RV8 add_result = add_overflow8(*dst, src_val);
-      set_all_flags(core->regs, check_zero(add_result.rv), 0,
-                    check_half_carry8(*dst, og_src_val, true) |
-                        check_half_carry8(*dst, src_val, true),
-                    add_result.over_flow);
-      set_reg(core->regs, dst_reg, add_result.rv);
-      check_daa(core, add_result.rv);
+      uint8_t og_src_val = mem_read8(core->mem, r_src_pair); // Read addy
+      handle_add8_reg(core, og_src_val, dst_reg, is_adc);
 
     } else {
       /* (1.3) Adding 2 reg pairs */
@@ -308,21 +293,9 @@ void add_reg(cpu *core, instruction i) {
     return;
   }
 
-  uint8_t og_src = *(get_reg(core->regs, src_reg));
-  uint8_t src = og_src;
-  uint8_t *dst = get_reg(core->regs, dst_reg);
   /* 8 bit r1 r2 add */
-
-  if (is_adc)
-    handle_add_carry2(core, &src);
-
-  RV8 add_result = add_overflow8(*dst, src);
-  set_all_flags(core->regs, check_zero(add_result.rv), 0,
-                check_half_carry8(*dst, og_src, true) |
-                    check_half_carry8(*dst, src, true),
-                add_result.over_flow);
-  set_reg(core->regs, dst_reg, add_result.rv);
-  check_daa(core, add_result.rv);
+  uint8_t og_src = *(get_reg(core->regs, src_reg));
+  handle_add8_reg(core, og_src, dst_reg, is_adc);
 }
 
 /* Loads in a value into the register pair based on i */
