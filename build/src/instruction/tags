@@ -13,7 +13,9 @@ check_half_carry8	instruction.c	/^bool check_half_carry8(uint8_t v1, uint8_t v2,
 check_zero	instruction.c	/^bool check_zero(uint16_t v) { return v == 0; }$/;"	f
 exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *core, uint8_t opcode) {$/;"	f
 halt	instruction.c	/^void halt(cpu *core, instruction i) {$/;"	f
-handle_add_carry	instruction.c	/^void handle_add_carry(cpu *core, RV8 *add_result) {$/;"	f
+handle_add8_reg	instruction.c	/^void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
+handle_add_carry	instruction.c	/^bool handle_add_carry(cpu *core, uint8_t *src) {$/;"	f
+is_arithmetic_carry	instruction.c	/^bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
 new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f

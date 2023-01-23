@@ -23,11 +23,50 @@ TEST(newInstructionTest, newInstruction) {
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
 
+TEST (subTest, sub) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
+    mem_write16(c->mem, c->regs->pc +2, 0x1e3e); /* LD E, 3e */
+    mem_write8(c->mem, c->regs->pc +4, 0x21); /* LD HL, nnnn */
+    mem_write16(c->mem, c->regs->pc +5, 0xbeef); /* nnnn */
+    mem_write16(c->mem, c->regs->pc +7, 0x3640); /* LD (HL), nn */
+    /* SUB E */
+    mem_write8(c->mem, c->regs->pc +9, 0x93);   
+    mem_write8(c->mem, c->regs->pc +10, 0x00); 
+
+    run_cpu_loop(c);
+
+    EXPECT_EQ(*(get_reg(c->regs, _E)), 0x3e);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
+
+    /* SUB r8 - Not implemented */
+    // mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
+    // mem_write16(c->mem, c->regs->pc +2, 0xd60f); /* SUB 0f */
+    // mem_write8(c->mem, c->regs->pc +4, 0x00); 
+    // run_cpu_loop(c);
+
+    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    // EXPECT_EQ(c->regs->flag, H_MASK | N_MASK);
+
+    /* SUB (HL) */
+    mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
+    mem_write8(c->mem, c->regs->pc +2, 0x96);
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0xbeef);
+    EXPECT_EQ(mem_read8(c->mem, 0xbeef), 0x40);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xfe);
+    EXPECT_EQ(c->regs->flag, CY_MASK | N_MASK);
+
+}
+
 TEST (addCarryTest, addCarry) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
 
-    printf("adc a, e\n");
     /* ADC A, E */
     mem_write8(c->mem, c->regs->pc, 0x1e); /* Load E nn */
     mem_write8(c->mem, c->regs->pc +1, 0x0f);
@@ -46,7 +85,6 @@ TEST (addCarryTest, addCarry) {
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0xf1);
     EXPECT_EQ(c->regs->flag, H_MASK);
 
-    printf("adc a, hl\n");
 
     /* ADC A, HL */
     mem_write8(c->mem, c->regs->pc, 0x3e); /* LD A, nn */
@@ -62,7 +100,6 @@ TEST (addCarryTest, addCarry) {
     EXPECT_EQ(c->regs->flag, H_MASK | Z_MASK | CY_MASK);
 
 
-    printf("adc a, d\n");
     /* ADC A, D */
     mem_write8(c->mem, c->regs->pc, 0x16); /* Load D nn */
     mem_write8(c->mem, c->regs->pc +1, 0x20);
@@ -256,7 +293,6 @@ TEST(daaTest, daa) {
     mem_write8(c->mem, c->regs->pc+3, 0x27); /* daa */
     mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    printf("finished run \n");
     EXPECT_EQ(*(get_reg(c->regs, _B)), 0xde +1);
     EXPECT_EQ(c->regs->flag, CY_MASK);
     EXPECT_EQ(*c->regs->a, (uint8_t) (0xde + 1 + 0x60 + 0x6));
@@ -627,7 +663,9 @@ TEST(inc8Test, inc8) {
     EXPECT_EQ(c->regs->flag, H_MASK);
 
     /* Check 0 flag */
+    set_all_flags(c->regs, 0, 0, 0, 0);
     set_reg(c->regs, _B, 0xff);
+
     mem_write8(c->mem, c->regs->pc, 0x04); /* Increase B + 1 */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
     run_cpu_loop(c);

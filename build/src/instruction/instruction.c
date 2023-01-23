@@ -153,6 +153,8 @@ void shift_reg(cpu *core, instruction i, bool left_shift) {
   set_reg(core->regs, reg, new_r);
 }
 
+bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }
+
 /* Subsitute functionality */
 void sub_reg(cpu *core, instruction i) {
 
@@ -160,6 +162,7 @@ void sub_reg(cpu *core, instruction i) {
   enum reg_enum dst_reg = i.args.dst_reg;
   enum reg_pairs src_pair = i.args.src_pair;
   enum reg_pairs dst_pair = i.args.dst_pair;
+  bool is_sbc = is_arithmetic_carry(i);
 
   /* (1) 16-bit sub instructions */
   if (src_pair == _SP && src_reg == _1) {
@@ -182,7 +185,9 @@ void sub_reg(cpu *core, instruction i) {
       RV16 sub_result = sub_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, sub_result.rv);
     }
+    return;
   }
+
   /* (2) 8 Bit sub instructions */
   if (dst_reg == _1) {
     uint8_t *r1 = get_reg(core->regs, src_reg);
@@ -204,10 +209,9 @@ bool handle_add_carry(cpu *core, uint8_t *src) {
   return true;
 }
 
+/* 8 bit r1 r2 add */
 void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
-                     bool is_adc) {
-
-  /* 8 bit r1 r2 add */
+                     bool is_adc, bool is_inc) {
   uint8_t src = og_src;
   uint8_t *dst = get_reg(core->regs, dst_reg);
 
@@ -215,10 +219,15 @@ void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
     handle_add_carry(core, &src);
 
   RV8 add_result = add_overflow8(*dst, src);
-  set_all_flags(core->regs, check_zero(add_result.rv), 0,
-                check_half_carry8(*dst, og_src, true) |
-                    check_half_carry8(*dst, src, true),
-                add_result.over_flow);
+  if (!is_inc)
+    set_all_flags(core->regs, check_zero(add_result.rv), 0,
+                  check_half_carry8(*dst, og_src, true) |
+                      check_half_carry8(*dst, src, true),
+                  add_result.over_flow);
+  else
+    set_all_flags(core->regs, check_zero(add_result.rv), false,
+                  check_half_carry8(*dst, 1, true), 2);
+
   set_reg(core->regs, dst_reg, add_result.rv);
   check_daa(core, add_result.rv);
 }
@@ -230,7 +239,7 @@ void add_reg(cpu *core, instruction i) {
   enum reg_pairs dst_pair = i.args.dst_pair;
 
   core->valid_daa = true;
-  bool is_adc = (i.opcode & 0x0f) > 0x07;
+  bool is_adc = is_arithmetic_carry(i);
   /* (1) 16-bit add instructions */
   uint16_t r_src_pair = __;
   if (src_pair != __) {
@@ -267,7 +276,7 @@ void add_reg(cpu *core, instruction i) {
     } else if (dst_reg != _) {
       /* Adding a pair to a reg, and storing in reg */
       uint8_t og_src_val = mem_read8(core->mem, r_src_pair); // Read addy
-      handle_add8_reg(core, og_src_val, dst_reg, is_adc);
+      handle_add8_reg(core, og_src_val, dst_reg, is_adc, false);
 
     } else {
       /* (1.3) Adding 2 reg pairs */
@@ -283,19 +292,13 @@ void add_reg(cpu *core, instruction i) {
 
   /* (2) 8 Bit add instructions */
   if (dst_reg == _1) {
-    /* Inc reg by 1 */
-    uint8_t *r1 = get_reg(core->regs, src_reg);
-    RV8 add_result = add_overflow8(*r1, 1);
-    set_all_flags(core->regs, check_zero(add_result.rv), false,
-                  check_half_carry8(*r1, 1, true), 2);
-    set_reg(core->regs, src_reg, add_result.rv);
-    check_daa(core, add_result.rv);
+    handle_add8_reg(core, 1, src_reg, false, true);
     return;
   }
 
   /* 8 bit r1 r2 add */
   uint8_t og_src = *(get_reg(core->regs, src_reg));
-  handle_add8_reg(core, og_src, dst_reg, is_adc);
+  handle_add8_reg(core, og_src, dst_reg, is_adc, false);
 }
 
 /* Loads in a value into the register pair based on i */
@@ -1146,6 +1149,89 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     args = new_args(_A, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     add_reg(core, out);
+    break;
+    /***************/
+    /* 0x80 - 0x8f */
+    /***************/
+  case 0x90: /* SUB A, B */
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x91: /* SUB A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x92: /* SUB A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x93: /* SUB A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x94: /* SUB A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x95: /* SUB A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x96: /* SUB A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x97: /* SUB A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x98: /* SBC A, B */
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x99: /* SBC A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9a: /* SBC A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9b: /* SBC A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9c: /* SBC A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9d: /* SBC A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9e: /* SBC A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0x9f: /* SBC A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    sub_reg(core, out);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);
