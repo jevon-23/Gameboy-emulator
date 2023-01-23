@@ -22,6 +22,43 @@ TEST(newInstructionTest, newInstruction) {
    
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
+TEST (subCarryTest, subCarry) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write16(c->mem, c->regs->pc, 0x3e3b); /* LD A, 3b */
+    mem_write16(c->mem, c->regs->pc +2, 0x262a); /* LD H, 2a */
+    mem_write8(c->mem, c->regs->pc +4, 0x37); /* SCF: set carry */
+
+    /* SBC A, H */
+    mem_write8(c->mem, c->regs->pc +5, 0x9c); /* SBC A, H */
+    mem_write8(c->mem, c->regs->pc +6, 0x00); /* EXIT */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _H)), 0x2a);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x10);
+    EXPECT_EQ(c->regs->flag, N_MASK);
+
+    /* SBC A, 3A */
+    // set_all_flags(c->regs, 0, 0, 0, 0);
+    // mem_write16(c->mem, c->regs->pc, 0x3e3b); /* LD A, 3b */
+    // mem_write16(c->mem, c->regs->pc, 0xde3a); /* SBC A, 3a */
+    // run_cpu_loop(c);
+    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    // EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
+
+    /* SBC A, (HL) */
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e3b); /* LD A, 3b */
+    mem_write8(c->mem, c->regs->pc +2, 0x21); /* LD HL, nnnn */
+    mem_write16(c->mem, c->regs->pc +3, 0xc0fe); /* nnnn */
+    mem_write16(c->mem, c->regs->pc +5, 0x364f); /* LD (HL), 4f */
+    mem_write8(c->mem, c->regs->pc +7, 0x37); /* SCF: set carry */
+    mem_write8(c->mem, c->regs->pc +8, 0x9e); /* SBC A, (HL) */
+    mem_write8(c->mem, c->regs->pc +9, 0x00); /* QUIT */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xeb);
+    EXPECT_EQ(c->regs->flag, H_MASK | N_MASK | CY_MASK);
+}
 
 TEST (subTest, sub) {
     memory *m = new_memory();

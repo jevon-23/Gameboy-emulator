@@ -155,15 +155,37 @@ void shift_reg(cpu *core, instruction i, bool left_shift) {
 
 bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }
 
+bool handle_carry(cpu *core, uint8_t *src) {
+  /* If carry flag is not set, don't increment */
+  if (!get_flag(core->regs, CY_MASK))
+    return false;
+
+  /* Increment by 1 */
+  (*src)++;
+  return true;
+}
+
 void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
                      bool is_sbc, bool is_dec) {
   uint8_t src = og_src;
   uint8_t dst = *(get_reg(core->regs, dst_reg));
+
+  if (is_sbc)
+    handle_carry(core, &src);
+
   RV8 sub_result = sub_overflow8(dst, src);
-  printf("check half: %d\n", check_half_carry8(src, dst, false));
-  set_all_flags(core->regs, check_zero(sub_result.rv), true,
-                check_half_carry8(dst, src, false), sub_result.over_flow);
+
+  if (!is_dec)
+    set_all_flags(core->regs, check_zero(sub_result.rv), true,
+                  check_half_carry8(dst, og_src, false) |
+                      check_half_carry8(dst, src, false),
+                  sub_result.over_flow);
+  else
+    set_all_flags(core->regs, check_zero(sub_result.rv), true,
+                  check_half_carry8(dst, src, false), 2);
+
   set_reg(core->regs, dst_reg, sub_result.rv);
+  check_daa(core, sub_result.rv);
 }
 /* Subsitute functionality */
 void sub_reg(cpu *core, instruction i) {
@@ -196,34 +218,19 @@ void sub_reg(cpu *core, instruction i) {
     } else if (dst_reg != _) {
       /* Sub (HL) */
       uint8_t src = mem_read8(core->mem, r_src_pair); // Read addy
-      handle_sub8_reg(core, src, dst_reg, false, false);
+      handle_sub8_reg(core, src, dst_reg, is_sbc, false);
     }
     return;
   }
 
   /* (2) 8 Bit sub instructions */
   if (dst_reg == _1) {
-    uint8_t *r1 = get_reg(core->regs, src_reg);
-    RV8 sub_result = sub_overflow8(*r1, 1);
-    set_all_flags(core->regs, check_zero(sub_result.rv), true,
-                  check_half_carry8(*r1, 1, false), 2);
-    set_reg(core->regs, src_reg, sub_result.rv);
-    check_daa(core, sub_result.rv);
+    handle_sub8_reg(core, 1, src_reg, false, true);
     return;
   }
 
   uint8_t src = *(get_reg(core->regs, src_reg));
-  handle_sub8_reg(core, src, dst_reg, false, false);
-}
-
-bool handle_add_carry(cpu *core, uint8_t *src) {
-  /* If carry flag is not set, don't increment */
-  if (!get_flag(core->regs, CY_MASK))
-    return false;
-
-  /* Increment by 1 */
-  (*src)++;
-  return true;
+  handle_sub8_reg(core, src, dst_reg, is_sbc, false);
 }
 
 /* 8 bit r1 r2 add */
@@ -233,7 +240,7 @@ void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
   uint8_t dst = *(get_reg(core->regs, dst_reg));
 
   if (is_adc)
-    handle_add_carry(core, &src);
+    handle_carry(core, &src);
 
   RV8 add_result = add_overflow8(dst, src);
   if (!is_inc)
