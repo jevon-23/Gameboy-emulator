@@ -83,6 +83,7 @@ target_link_libraries(test_cpu gtest_main)
 # Testing instruction
 add_executable(test_instruction testing/instruction_test.cpp src/instruction/instruction.c src/utils/utils.c  include/r_utils.h src/mem/mem.c src/cpu/cpu.c)
 
+add_compile_options(test_instruction -g)
 
 add_test(testAll test_instruction)
 

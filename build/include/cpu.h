@@ -60,6 +60,7 @@ void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val);
 void set_flag(registers *reg, uint8_t mask, bool set);
 void set_all_flags(registers *reg, int z, int n, int h, int cy);
 bool get_flag(registers *reg, uint8_t mask); 
+uint8_t get_flag_reg(registers *reg);
 
 void run_cpu_loop(cpu *core);
 void run_cpu(cpu *core);

@@ -32,7 +32,7 @@ bool check_half_carry8(uint8_t v1, uint8_t v2, bool is_add) {
   /* Add the lower nibbles, and check to see if they turn on 4th bit,
    * if so => overflow bit 3 */
   if (is_add)
-    return ((v1 & 0xf) + (v2 & 0xf) & 0x10) == 0x10;
+    return (((v1 & 0xf) + (v2 & 0xf)) & 0x10) == 0x10;
   return ((v1 & 0xf) - (v2 & 0xf) & 0x10) == 0x10;
 }
 
@@ -194,6 +194,34 @@ void sub_reg(cpu *core, instruction i) {
   }
 }
 
+bool handle_add_carry2(cpu *core, uint8_t *src) {
+  /* If carry flag is not set, don't increment */
+  if (!get_flag(core->regs, CY_MASK))
+    return false;
+  printf("get flag returned back: %d\n", get_flag(core->regs, CY_MASK));
+  /* Increment by 1 */
+  (*src)++;
+  // *add_result = add_overflow8(temp, 1);
+  return true;
+}
+
+bool handle_add_carry(cpu *core, RV8 *add_result) {
+  /* If carry flag is not set, don't increment */
+  if (!get_flag(core->regs, CY_MASK))
+    return false;
+  printf("get flag returned back: %d\n", get_flag(core->regs, CY_MASK));
+  uint8_t temp = add_result->rv;
+  /* Increment by 1 */
+  *add_result = add_overflow8(temp, 1);
+  return true;
+
+  /* TODO: Do we need to or w/ the previous set flag? */
+  //   set_all_flags(core->regs, check_zero(add_result->rv), 0,
+  //                 check_half_carry8(temp, 1, true) | get_flag(core->regs,
+  //                 H_MASK), add_result->over_flow | get_flag(core->regs,
+  //                 CY_MASK));
+}
+
 void add_reg(cpu *core, instruction i) {
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
@@ -201,6 +229,7 @@ void add_reg(cpu *core, instruction i) {
   enum reg_pairs dst_pair = i.args.dst_pair;
 
   core->valid_daa = true;
+  bool is_adc = (i.opcode & 0x0f) > 0x07;
   /* (1) 16-bit add instructions */
   uint16_t r_src_pair = __;
   if (src_pair != __) {
@@ -237,6 +266,24 @@ void add_reg(cpu *core, instruction i) {
     else if (src_reg == _1) {
       RV16 add_result = add_overflow16(r_src_pair, 1);
       set_reg_pair(core->regs, src_pair, add_result.rv);
+    } else if (dst_reg != _) {
+      /* Adding a pair to a reg, and storing in reg */
+      uint8_t og_src_val = mem_read8(core->mem, r_src_pair);
+      uint8_t src_val = og_src_val;
+      uint8_t *dst = get_reg(core->regs, dst_reg);
+
+      /* Need to set values for carry check before exec */
+      if (is_adc)
+        handle_add_carry2(core, &src_val);
+
+      RV8 add_result = add_overflow8(*dst, src_val);
+      set_all_flags(core->regs, check_zero(add_result.rv), 0,
+                    check_half_carry8(*dst, og_src_val, true) |
+                        check_half_carry8(*dst, src_val, true),
+                    add_result.over_flow);
+      set_reg(core->regs, dst_reg, add_result.rv);
+      check_daa(core, add_result.rv);
+
     } else {
       /* (1.3) Adding 2 reg pairs */
       uint16_t r_dst_pair = get_reg_pair(core->regs, dst_pair);
@@ -246,17 +293,36 @@ void add_reg(cpu *core, instruction i) {
                     check_half_carry16(r_src_pair, r_dst_pair, true),
                     add_result.over_flow);
     }
+    return;
   }
 
   /* (2) 8 Bit add instructions */
   if (dst_reg == _1) {
+    /* Inc reg by 1 */
     uint8_t *r1 = get_reg(core->regs, src_reg);
     RV8 add_result = add_overflow8(*r1, 1);
     set_all_flags(core->regs, check_zero(add_result.rv), false,
                   check_half_carry8(*r1, 1, true), 2);
     set_reg(core->regs, src_reg, add_result.rv);
     check_daa(core, add_result.rv);
+    return;
   }
+
+  uint8_t og_src = *(get_reg(core->regs, src_reg));
+  uint8_t src = og_src;
+  uint8_t *dst = get_reg(core->regs, dst_reg);
+  /* 8 bit r1 r2 add */
+
+  if (is_adc)
+    handle_add_carry2(core, &src);
+
+  RV8 add_result = add_overflow8(*dst, src);
+  set_all_flags(core->regs, check_zero(add_result.rv), 0,
+                check_half_carry8(*dst, og_src, true) |
+                    check_half_carry8(*dst, src, true),
+                add_result.over_flow);
+  set_reg(core->regs, dst_reg, add_result.rv);
+  check_daa(core, add_result.rv);
 }
 
 /* Loads in a value into the register pair based on i */
@@ -646,7 +712,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x37: /* SCF */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    set_all_flags(core->regs, 3, false, false, CY_MASK);
+    set_all_flags(core->regs, 3, false, false, true);
     break;
   case 0x38: /* JR C nn */
     cc_jump_relative(core, out, CY_MASK, true);
@@ -985,45 +1051,128 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 8, args);
     load_reg(core, out);
     break;
-  case 0x78: /* AD A, B */
+  case 0x78: /* LD A, B */
     args = new_args(_B, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x79: /* AD A, C */
+  case 0x79: /* LD A, C */
     args = new_args(_C, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7a: /* AD A, D */
+  case 0x7a: /* LD A, D */
     args = new_args(_D, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7b: /* AD A, E */
+  case 0x7b: /* LD A, E */
     args = new_args(_E, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7c: /* AD A, H */
+  case 0x7c: /* LD A, H */
     args = new_args(_H, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7d: /* AD A, A */
+  case 0x7d: /* LD A, A */
     args = new_args(_L, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7e: /* AD A, HA */
+  case 0x7e: /* LD A, HA */
     args = new_args(_A, _, _HL, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
     break;
-  case 0x7f: /* AD A, A */
+  case 0x7f: /* LD A, A */
     args = new_args(_A, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     load_reg(core, out);
+    break;
+    /***************/
+    /* 0x80 - 0x8f */
+    /***************/
+  case 0x80: /* ADD A, B */
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x81: /* ADD A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x82: /* ADD A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x83: /* ADD A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x84: /* ADD A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x85: /* ADD A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x86: /* ADD A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x87: /* ADD A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x88: /* ADC A, B */
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x89: /* ADC A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8a: /* ADC A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8b: /* ADC A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8c: /* ADC A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8d: /* ADC A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8e: /* ADC A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
+    break;
+  case 0x8f: /* ADC A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    add_reg(core, out);
     break;
   default:
     printf("Invalid opcode: %x\n", opcode);

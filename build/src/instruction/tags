@@ -12,6 +12,8 @@ check_half_carry16	instruction.c	/^bool check_half_carry16(uint16_t v1, uint16_t
 check_half_carry8	instruction.c	/^bool check_half_carry8(uint8_t v1, uint8_t v2, bool is_add) {$/;"	f
 check_zero	instruction.c	/^bool check_zero(uint16_t v) { return v == 0; }$/;"	f
 exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *core, uint8_t opcode) {$/;"	f
+halt	instruction.c	/^void halt(cpu *core, instruction i) {$/;"	f
+handle_add_carry	instruction.c	/^void handle_add_carry(cpu *core, RV8 *add_result) {$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
 new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f

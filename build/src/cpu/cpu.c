@@ -179,7 +179,9 @@ void set_reg_pair(registers *regs, enum reg_pairs pair, uint16_t val) {
   }
 }
 
-bool get_flag(registers *reg, uint8_t mask) { return reg->flag & mask; }
+bool get_flag(registers *reg, uint8_t mask) { return (bool)(reg->flag & mask); }
+
+uint8_t get_flag_reg(registers *reg) { return reg->flag & 0xf0; }
 
 /* Each flag is only one bit. if set == true
  * => Our flag == our bit being on => (mask * set) = mask
