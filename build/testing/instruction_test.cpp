@@ -55,6 +55,8 @@ TEST (subTest, sub) {
     mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
     mem_write8(c->mem, c->regs->pc +2, 0x96);
     mem_write8(c->mem, c->regs->pc +3, 0x00);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    run_cpu_loop(c);
 
     EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0xbeef);
     EXPECT_EQ(mem_read8(c->mem, 0xbeef), 0x40);

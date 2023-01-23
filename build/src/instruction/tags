@@ -15,6 +15,7 @@ exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *cor
 halt	instruction.c	/^void halt(cpu *core, instruction i) {$/;"	f
 handle_add8_reg	instruction.c	/^void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 handle_add_carry	instruction.c	/^bool handle_add_carry(cpu *core, uint8_t *src) {$/;"	f
+handle_sub8_reg	instruction.c	/^void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 is_arithmetic_carry	instruction.c	/^bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
