@@ -48,7 +48,10 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /* Helper functionality for opcodes */
 /************************************/
 
-void and_reg(cpu *core, instruction i) {
+/* Private enum for bitwise functions */
+enum logic_fn { _AND, _XOR, _OR, _CP };
+
+void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {
 
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
@@ -76,9 +79,27 @@ void and_reg(cpu *core, instruction i) {
     src = *(get_reg(core->regs, src_reg));
   }
 
-  out = dst & src;
+  switch (fn_type) {
+  case _AND:
+    out = dst & src;
+    break;
+  case _XOR:
+    out = dst ^ src;
+    break;
+  case _OR:
+    out = dst | src;
+    break;
+  case _CP:;
+    RV8 sub_result = sub_overflow8(dst, src);
+    set_all_flags(core->regs, check_zero(sub_result.rv), true,
+                  check_half_carry8(dst, src, false), sub_result.over_flow);
+    return;
+  default:
+    printf("Invalid function type passed in to logical \n");
+    exit(-1);
+  }
+  set_all_flags(core->regs, check_zero(out), 0, fn_type == _AND, 0);
   set_reg(core->regs, dst_reg, out);
-  set_all_flags(core->regs, check_zero(out), 0, 1, 0);
 }
 
 void check_daa(cpu *core, uint8_t rv) {
@@ -1297,42 +1318,165 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0xa0:
     args = new_args(_B, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa1: /* AND A, C */
     args = new_args(_C, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa2: /* AND A, D */
     args = new_args(_D, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa3: /* AND A, E */
     args = new_args(_E, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa4: /* AND A, H */
     args = new_args(_H, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa5: /* AND A, L */
     args = new_args(_L, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa6: /* AND A, (HL) */
     args = new_args(_, _A, _HL, __);
     set_instruction_vars(core, &out, 1, 8, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
     break;
   case 0xa7: /* AND A, A */
     args = new_args(_A, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
-    and_reg(core, out);
+    logic_reg(core, out, _AND);
+    break;
+  case 0xa8:
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xa9: /* XOR A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xaa: /* XOR A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xab: /* XOR A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xac: /* XOR A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xad: /* XOR A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xae: /* XOR A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xaf: /* XOR A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _XOR);
+    break;
+    /**********************************************/
+    /* b0 - bf.... halfway through the first half */
+    /**********************************************/
+  case 0xb0:
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb1: /* OR A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb2: /* OR A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb3: /* OR A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb4: /* OR A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb5: /* OR A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb6: /* OR A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb7: /* OR A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xb8:
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xb9: /* CP A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xba: /* CP A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xbb: /* CP A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xbc: /* CP A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xbd: /* CP A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xbe: /* CP A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xbf: /* CP A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    logic_reg(core, out, _CP);
     break;
 
   default:
