@@ -48,6 +48,39 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /* Helper functionality for opcodes */
 /************************************/
 
+void and_reg(cpu *core, instruction i) {
+
+  enum reg_enum src_reg = i.args.src_reg;
+  enum reg_enum dst_reg = i.args.dst_reg;
+  enum reg_pairs src_pair = i.args.src_pair;
+
+  if (dst_reg != _A) {
+    printf("A is not the destination register\n");
+    exit(-1);
+  }
+
+  uint8_t dst = *(get_reg(core->regs, dst_reg));
+  uint8_t src = 0x00;
+  uint8_t out = 0x00;
+
+  if (src_pair != __) {
+    if (src_pair != _HL) {
+      printf("Invalid register passed into and\n");
+      exit(-1);
+    }
+    /* AND A, (HL) */
+    uint16_t r_src_pair = get_reg_pair(core->regs, src_pair);
+    src = mem_read8(core->mem, r_src_pair); // Read addy
+  } else if (src_reg != _) {
+    /* AND A, srcReg */
+    src = *(get_reg(core->regs, src_reg));
+  }
+
+  out = dst & src;
+  set_reg(core->regs, dst_reg, out);
+  set_all_flags(core->regs, check_zero(out), 0, 1, 0);
+}
+
 void check_daa(cpu *core, uint8_t rv) {
   /* https://forums.nesdev.org/viewtopic.php?t=15944
    * From what I understand, we are trying to change the output of
@@ -1257,6 +1290,51 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     sub_reg(core, out);
     break;
+
+    /**********************************************/
+    /* a0 - af.... halfway through the first half */
+    /**********************************************/
+  case 0xa0:
+    args = new_args(_B, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa1: /* AND A, C */
+    args = new_args(_C, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa2: /* AND A, D */
+    args = new_args(_D, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa3: /* AND A, E */
+    args = new_args(_E, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa4: /* AND A, H */
+    args = new_args(_H, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa5: /* AND A, L */
+    args = new_args(_L, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+  case 0xa6: /* AND A, (HL) */
+    args = new_args(_, _A, _HL, __);
+    set_instruction_vars(core, &out, 1, 8, args);
+    and_reg(core, out);
+    break;
+  case 0xa7: /* AND A, A */
+    args = new_args(_A, _A, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    and_reg(core, out);
+    break;
+
   default:
     printf("Invalid opcode: %x\n", opcode);
     exit(-1);

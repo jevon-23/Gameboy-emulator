@@ -22,6 +22,7 @@ TEST(newInstructionTest, newInstruction) {
    
     EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
 }
+
 TEST (subCarryTest, subCarry) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
@@ -834,4 +835,48 @@ TEST(loadBCTest, loadBC) {
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _B)), 0xaf);
 }
+
+
+TEST (andTest, andT) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* AND A, L */
+    mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
+    mem_write16(c->mem, c->regs->pc +2, 0x2e3f); /* LD L, 3f */
+    mem_write8(c->mem, c->regs->pc +4, 0xa5); /* AND A, L */
+    mem_write8(c->mem, c->regs->pc +5, 0x00); 
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _L)), 0x3f);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x1a);
+    EXPECT_EQ(c->regs->flag, H_MASK);
+
+    /* AND A, x38 */
+    // set_all_flags(c->regs, 0, 0, 0, 0);
+    // mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
+    // mem_write16(c->mem, c->regs->pc +2, 0xe638); /* AND A, 38 */
+    // mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
+    // run_cpu_loop(c);
+    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x18);
+    // EXPECT_EQ(c->regs->flag, H_MASK);
+
+
+    /* AND A, (HL) */
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
+    mem_write8(c->mem, c->regs->pc +2, 0x21); /* LD HL, nnnn */
+    mem_write16(c->mem, c->regs->pc +3, 0xbeef); /* nnnn */
+    mem_write16(c->mem, c->regs->pc +5, 0x3600); /* LD (HL), nn */
+
+    mem_write8(c->mem, c->regs->pc +7, 0xa6); /* AND A, (HL) */
+    mem_write8(c->mem, c->regs->pc +8, 0x00); 
+    run_cpu_loop(c);
+
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0xbeef);
+    EXPECT_EQ(mem_read8(c->mem, 0xbeef), 0x00);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    EXPECT_EQ(c->regs->flag, H_MASK | Z_MASK);
+
+}
+
 }
