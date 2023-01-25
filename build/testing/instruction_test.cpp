@@ -998,4 +998,60 @@ TEST (cpTest, cpT) {
 
 }
 
+TEST (jpTest, jp) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write8(c->mem, c->regs->pc, 0xc3); /* JP 0x8000 */
+    mem_write16(c->mem, c->regs->pc+1, 0x8000);
+    mem_write8(c->mem, c->regs->pc+3, 0x37); /* SCF */
+    mem_write8(c->mem, c->regs->pc+4, 0x00);
+    mem_write8(c->mem, 0x8000, 0x00); /* quit */
+
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, 0x8001);
+    EXPECT_EQ(c->regs->flag, 0x0);
+}
+
+TEST (callTest, call) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* Test call */
+    mem_write8(c->mem, c->regs->pc, 0xc3); /* JP 0x8000 */
+    mem_write16(c->mem, c->regs->pc+1, 0x8000);
+    mem_write8(c->mem, 0x8000, 0xcd); /* CALL 1234 */
+    mem_write16(c->mem, 0x8000 + 1, 0x1234);
+    mem_write16(c->mem, 0x8000 + 3, 0x00);
+    mem_write16(c->mem, 0x1234, 0x00);
+
+    run_cpu_loop(c);
+
+    EXPECT_EQ(c->regs->pc, 0x1235);
+    EXPECT_EQ(stack_peak(c->stack), 0x8003);
+
+}
+
+TEST (callRetTest, callRet) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* Test call */
+    mem_write8(c->mem, c->regs->pc, 0xc3); /* JP 0x8000 */
+    mem_write16(c->mem, c->regs->pc+1, 0x8000);
+
+    mem_write8(c->mem, 0x8000, 0xcd); /* CALL 9000 */
+    mem_write16(c->mem, 0x8000 + 1, 0x9000); 
+
+    mem_write8(c->mem, 0x9000, 0xc0); /* RET */
+    mem_write8(c->mem, 0x9000 +1, 0x00);
+    mem_write8(c->mem, 0x8000 + 3, 0x00); /* QUIT */
+
+    breakpoint();
+    run_cpu_loop(c);
+
+    EXPECT_EQ(c->regs->pc, 0x8004);
+    EXPECT_EQ(stack_peak(c->stack), 0x0);
+
+}
 }

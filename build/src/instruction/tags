@@ -4,7 +4,12 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+_AND	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
+_CP	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
+_OR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
+_XOR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 add_reg	instruction.c	/^void add_reg(cpu *core, instruction i) {$/;"	f
+call	instruction.c	/^void call(cpu *core, instruction i) {$/;"	f
 cc_jump_relative	instruction.c	/^void cc_jump_relative(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 check_carry8_shift	instruction.c	/^bool check_carry8_shift(uint8_t v1, bool left_shift) {$/;"	f
 check_daa	instruction.c	/^void check_daa(cpu *core, uint8_t rv) {$/;"	f
@@ -14,13 +19,18 @@ check_zero	instruction.c	/^bool check_zero(uint16_t v) { return v == 0; }$/;"	f
 exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *core, uint8_t opcode) {$/;"	f
 halt	instruction.c	/^void halt(cpu *core, instruction i) {$/;"	f
 handle_add8_reg	instruction.c	/^void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
-handle_add_carry	instruction.c	/^bool handle_add_carry(cpu *core, uint8_t *src) {$/;"	f
+handle_carry	instruction.c	/^bool handle_carry(cpu *core, uint8_t *src) {$/;"	f
 handle_sub8_reg	instruction.c	/^void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 is_arithmetic_carry	instruction.c	/^bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }$/;"	f
+jump	instruction.c	/^void jump(cpu *core, instruction i) {$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
+logic_fn	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	g	file:
+logic_reg	instruction.c	/^void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {$/;"	f
 new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f
 noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
+ret	instruction.c	/^void ret(cpu *core, instruction i) {$/;"	f
+ret	instruction.c	/^void ret(cpu *core, instruction i) {}$/;"	f
 set_instruction_vars	instruction.c	/^void set_instruction_vars(cpu *core, instruction *i, uint8_t len,$/;"	f
 shift_reg	instruction.c	/^void shift_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
 stack_pop_i	instruction.c	/^void stack_pop_i(cpu *core, instruction i) {$/;"	f

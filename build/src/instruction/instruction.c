@@ -48,6 +48,34 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /* Helper functionality for opcodes */
 /************************************/
 
+void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }
+
+void jump(cpu *core, instruction i) {
+  uint16_t new_pc = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+  jp(core, new_pc);
+}
+
+void call(cpu *core, instruction i) {
+  /* Store current pc into stack */
+  if (!stack_push(core->stack, core->regs->pc)) {
+    printf("Could not store address onto stack for fn call\n");
+    exit(-1);
+  }
+  uint16_t new_pc = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+  jp(core, new_pc);
+}
+
+void ret(cpu *core, instruction i) {
+  /* Pop current pc from stack and load into pc */
+  if (stack_is_empty(core->stack)) {
+    printf("Could not pop address from stack for fn return\n");
+    exit(-1);
+  }
+
+  uint16_t new_pc = stack_pop(core->stack);
+  jp(core, new_pc);
+}
+
 /* Private enum for bitwise functions */
 enum logic_fn { _AND, _XOR, _OR, _CP };
 
@@ -243,7 +271,6 @@ void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,
 }
 /* Subsitute functionality */
 void sub_reg(cpu *core, instruction i) {
-
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
   enum reg_pairs src_pair = i.args.src_pair;
@@ -381,7 +408,6 @@ void add_reg(cpu *core, instruction i) {
 
 /* Loads in a value into the register pair based on i */
 void load_reg(cpu *core, instruction i) {
-
   enum reg_enum src_reg = i.args.src_reg;
   enum reg_enum dst_reg = i.args.dst_reg;
   enum reg_pairs src_pair = i.args.src_pair;
@@ -1477,6 +1503,21 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     args = new_args(_A, _A, __, __);
     set_instruction_vars(core, &out, 1, 4, args);
     logic_reg(core, out, _CP);
+    break;
+  case 0xc0: /* RET */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out);
+    break;
+  case 0xc3: /* JP */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 3, 16, args); // # cycles => 20/8
+    jump(core, out);
+    break;
+  case 0xcd: /* CALL */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 3, 24, args);
+    call(core, out);
     break;
 
   default:
