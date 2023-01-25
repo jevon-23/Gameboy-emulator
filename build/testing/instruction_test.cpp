@@ -133,7 +133,6 @@ TEST (addCarryTest, addCarry) {
     mem_write8(c->mem, c->regs->pc +3, 0x8E); /* ADC A, (HL) */
     mem_write8(c->mem, c->regs->pc +4, 0x00); /* END */
     set_all_flags(c->regs, 0, 0, 0, 0);
-    breakpoint();
     run_cpu_loop(c);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _HL)), 0x1e);
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
@@ -1043,15 +1042,41 @@ TEST (callRetTest, callRet) {
     mem_write8(c->mem, 0x8000, 0xcd); /* CALL 9000 */
     mem_write16(c->mem, 0x8000 + 1, 0x9000); 
 
-    mem_write8(c->mem, 0x9000, 0xc0); /* RET */
+    mem_write8(c->mem, 0x9000, 0xc9); /* RET */
     mem_write8(c->mem, 0x9000 +1, 0x00);
     mem_write8(c->mem, 0x8000 + 3, 0x00); /* QUIT */
 
-    breakpoint();
     run_cpu_loop(c);
 
     EXPECT_EQ(c->regs->pc, 0x8004);
     EXPECT_EQ(stack_peak(c->stack), 0x0);
 
 }
+
+TEST (pushPopTest, pushPop) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write8(c->mem, c->regs->pc, 0x01); /* load BC 0xbeef */
+    mem_write16(c->mem, c->regs->pc+1, 0xbeef);
+    mem_write8(c->mem, c->regs->pc+3, 0xc5); /* PUSH BC */
+    mem_write8(c->mem, c->regs->pc+4, 0x00);
+
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_is_empty(c->stack), false);
+    EXPECT_EQ(stack_peak(c->stack), 0xbeef);
+    EXPECT_EQ(stack_peak(c->stack), get_reg_pair(c->regs, _BC));
+
+    /* Change the value in the stack pointer */
+    mem_write8(c->mem, c->regs->pc, 0x31); /* load SP 0xc0fe */
+    mem_write16(c->mem, c->regs->pc+1, 0xc0fe);
+    mem_write8(c->mem, c->regs->pc+3, 0xc1); /* POP BC */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* EXIT */
+
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_is_empty(c->stack), true);
+    EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xc0fe);
+
+}
+
 }

@@ -191,13 +191,34 @@ void halt(cpu *core, instruction i) {
   return;
 }
 
-/* Pop from the stack and store it into an address */
-void stack_pop_i(cpu *core, instruction i) {
-  enum reg_pairs pair = i.args.src_pair;
-  /* (1) Popping from stack into a pair reg */
-  if (pair != __)
+void push(cpu *core, instruction i) {
+  enum reg_pairs dst_pair = i.args.dst_pair;
+  if (dst_pair == __) {
+    printf("Invalid register pair passed in to push\n");
+    exit(-1);
+  }
+
+  /* Read in the value from the dst reg */
+  uint16_t reg_val = get_reg_pair(core->regs, dst_pair);
+  stack_push(core->stack, reg_val);
+}
+
+/* Pop from the stack and store it into destination */
+void pop(cpu *core, instruction i) {
+  enum reg_pairs dst_pair = i.args.dst_pair;
+  /* (1) Popping from stack into a src_pair reg */
+  if (dst_pair != __) {
+
     /* Not implemented */
+    if (stack_is_empty(core->stack)) {
+      printf("Could not pop from stack\n");
+      exit(-1);
+    }
+
+    uint16_t value = stack_pop(core->stack);
+    set_reg_pair(core->regs, dst_pair, value);
     return;
+  }
 
   /* (2) Popping from stack into an address */
 
@@ -543,7 +564,7 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0x08: /* LD (a16), SP */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 3, 4, args);
-    stack_pop_i(core, out);
+    pop(core, out);
     break;
   case 0x09: /* ADD HL, BC */
     args = new_args(_, _, _HL, _BC);
@@ -1504,15 +1525,25 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     logic_reg(core, out, _CP);
     break;
-  case 0xc0: /* RET */
-    args = new_args(_, _, __, __);
-    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
-    ret(core, out);
+  case 0xc1: /* POP BC */
+    args = new_args(_, _, __, _BC);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    pop(core, out);
     break;
   case 0xc3: /* JP */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 3, 16, args); // # cycles => 20/8
     jump(core, out);
+    break;
+  case 0xc5: /* PUSH BC */
+    args = new_args(_, _, __, _BC);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    push(core, out);
+    break;
+  case 0xc9: /* RET */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out);
     break;
   case 0xcd: /* CALL */
     args = new_args(_, _, __, __);

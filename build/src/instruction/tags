@@ -22,6 +22,7 @@ handle_add8_reg	instruction.c	/^void handle_add8_reg(cpu *core, uint8_t og_src, 
 handle_carry	instruction.c	/^bool handle_carry(cpu *core, uint8_t *src) {$/;"	f
 handle_sub8_reg	instruction.c	/^void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 is_arithmetic_carry	instruction.c	/^bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }$/;"	f
+jp	instruction.c	/^void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }$/;"	f
 jump	instruction.c	/^void jump(cpu *core, instruction i) {$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
@@ -29,10 +30,10 @@ logic_fn	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	g	file:
 logic_reg	instruction.c	/^void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {$/;"	f
 new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f
 noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
+pop	instruction.c	/^void pop(cpu *core, instruction i) {$/;"	f
+push	instruction.c	/^void push(cpu *core, instruction i) {$/;"	f
 ret	instruction.c	/^void ret(cpu *core, instruction i) {$/;"	f
-ret	instruction.c	/^void ret(cpu *core, instruction i) {}$/;"	f
 set_instruction_vars	instruction.c	/^void set_instruction_vars(cpu *core, instruction *i, uint8_t len,$/;"	f
 shift_reg	instruction.c	/^void shift_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
-stack_pop_i	instruction.c	/^void stack_pop_i(cpu *core, instruction i) {$/;"	f
 stop_cpu	instruction.c	/^void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }$/;"	f
 sub_reg	instruction.c	/^void sub_reg(cpu *core, instruction i) {$/;"	f
