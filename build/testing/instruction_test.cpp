@@ -1010,6 +1010,18 @@ TEST (jpTest, jp) {
     run_cpu_loop(c);
     EXPECT_EQ(c->regs->pc, 0x8001);
     EXPECT_EQ(c->regs->flag, 0x0);
+
+    mem_write8(c->mem, 0xc0fe, 0x00); /* EXIT */
+    mem_write8(c->mem, 0xbeef, 0x00); /* EXIT */
+
+    mem_write8(c->mem, c->regs->pc, 0xca); /* JP Z 0xc0fe */
+    mem_write16(c->mem, c->regs->pc +1, 0xc0fe);
+    mem_write8(c->mem, c->regs->pc +3, 0xc2); /* JP NZ 0xbeef */
+    mem_write16(c->mem, c->regs->pc +4, 0xbeef);
+    mem_write8(c->mem, c->regs->pc +6, 0x00);
+
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, 0xbeef +1);
 }
 
 TEST (callTest, call) {
@@ -1051,6 +1063,36 @@ TEST (callRetTest, callRet) {
     EXPECT_EQ(c->regs->pc, 0x8004);
     EXPECT_EQ(stack_peak(c->stack), 0x0);
 
+    /* Test ret nz & ret z */
+
+    /* Write the function we are going to call, might as well test
+     * call z and call nz */
+
+
+    mem_write8(c->mem, 0xbeef, 0x00);
+
+    mem_write8(c->mem, 0xc0fe, 0xc8);  /* RET Z -> no jump */
+    mem_write16(c->mem, 0xc0fe +1, 0x3ef0);  /* LD A, f0 */
+    mem_write16(c->mem, 0xc0fe +3, 0x1e0f); /* LD E, 0f */
+    /* Set z_flag == 0 */
+    mem_write8(c->mem, 0xc0fe +5, 0xa3); /* AND A, E */
+    mem_write8(c->mem, 0xc0fe +6, 0xc0); /* RET NZ -> no jump */
+    mem_write16(c->mem, 0xc0fe +7, 0x3eb3);  /* LD A, b3 */
+    mem_write8(c->mem, 0xc0fe +9, 0xc8);  /* RET Z -> jump */
+    mem_write8(c->mem, 0xc0fe +10, 0x00);  /* EXIT */
+
+
+    /* Set A = 0 => turn zero flag on */
+    mem_write8(c->mem, c->regs->pc, 0xcc); /* CALL Z beef -> fail */
+    mem_write16(c->mem, c->regs->pc + 1, 0xbeef); 
+    mem_write8(c->mem, c->regs->pc + 3, 0xc4);  /* CALL NZ c0fe -> jump */
+    mem_write16(c->mem, c->regs->pc + 4, 0xc0fe); 
+    mem_write8(c->mem, c->regs->pc + 6, 0x00);  /* EXIT */
+
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->flag, Z_MASK | H_MASK);
+    EXPECT_EQ(*(get_reg(c->regs, _E)), 0x0f);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xb3);
 }
 
 TEST (pushPopTest, pushPop) {

@@ -50,26 +50,53 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 
 void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }
 
-void jump(cpu *core, instruction i) {
+void jump(cpu *core, instruction i, uint8_t mask, bool set) {
+  arguments args = new_args(_, _, __, __);
+  if (mask != 0x00) {
+    /* If the cases where we should jump are not true, continue */
+    if (!(!set & !get_flag(core->regs, mask) ||
+          set & get_flag(core->regs, mask))) {
+      set_instruction_vars(core, &i, 3, 12, args); // # cycles => 20/8
+      return;
+    }
+  }
+
+  set_instruction_vars(core, &i, 3, 16, args);
   uint16_t new_pc = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
   jp(core, new_pc);
 }
 
-void call(cpu *core, instruction i) {
+void call(cpu *core, instruction i, uint8_t mask, bool set) {
   /* Store current pc into stack */
   if (!stack_push(core->stack, core->regs->pc)) {
     printf("Could not store address onto stack for fn call\n");
     exit(-1);
   }
+  if (mask != 0x00) {
+    /* If the cases where we should jump are not true, continue */
+    if (!(!set & !get_flag(core->regs, mask) ||
+          set & get_flag(core->regs, mask))) {
+      return;
+    }
+  }
+
   uint16_t new_pc = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
   jp(core, new_pc);
 }
 
-void ret(cpu *core, instruction i) {
+void ret(cpu *core, instruction i, uint8_t mask, bool set) {
   /* Pop current pc from stack and load into pc */
   if (stack_is_empty(core->stack)) {
     printf("Could not pop address from stack for fn return\n");
     exit(-1);
+  }
+
+  if (mask != 0x00) {
+    /* If the cases where we should jump are not true, continue */
+    if (!(!set & !get_flag(core->regs, mask) ||
+          set & get_flag(core->regs, mask))) {
+      return;
+    }
   }
 
   uint16_t new_pc = stack_pop(core->stack);
@@ -1525,30 +1552,58 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 4, args);
     logic_reg(core, out, _CP);
     break;
+
+    /***************/
+    /* 0xc0 - 0xcf */
+    /***************/
+  case 0xc0: /* RET NZ */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out, Z_MASK, false);
+    break;
   case 0xc1: /* POP BC */
     args = new_args(_, _, __, _BC);
     set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
     pop(core, out);
     break;
+  case 0xc2: /* JP */
+    jump(core, out, Z_MASK, false);
+    break;
   case 0xc3: /* JP */
+    jump(core, out, 0, 0);
+    break;
+  case 0xc4: /* CALL NZ */
     args = new_args(_, _, __, __);
-    set_instruction_vars(core, &out, 3, 16, args); // # cycles => 20/8
-    jump(core, out);
+    set_instruction_vars(core, &out, 3, 24, args);
+    call(core, out, Z_MASK, false);
     break;
   case 0xc5: /* PUSH BC */
     args = new_args(_, _, __, _BC);
     set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
     push(core, out);
     break;
+  case 0xc8: /* RET Z */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out, Z_MASK, true);
+    break;
   case 0xc9: /* RET */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
-    ret(core, out);
+    ret(core, out, 0, 0);
+    break;
+  case 0xca: /* JP Z */
+    jump(core, out, Z_MASK, true);
+    break;
+  case 0xcc: /* CALL Z */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 3, 24, args);
+    call(core, out, Z_MASK, true);
     break;
   case 0xcd: /* CALL */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 3, 24, args);
-    call(core, out);
+    call(core, out, 0, 0);
     break;
 
   default:
