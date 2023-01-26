@@ -151,6 +151,16 @@ TEST (addCarryTest, addCarry) {
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x20 + 0xc0);
     EXPECT_EQ(c->regs->flag, 0);
 
+    /* ADC A, nn */
+    mem_write16(c->mem, c->regs->pc, 0x3ee1); /* LD A, e1 */
+    mem_write16(c->mem, c->regs->pc +2, 0xCE3b); /* ADC A, 3b */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* END */
+    set_all_flags(c->regs, 0, 0, 0, 1);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x1d);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+
+
 
 }
 TEST (addTest, add) {
@@ -179,6 +189,14 @@ TEST (addTest, add) {
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0xd0);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _HL)), 0xd0);
     EXPECT_EQ(c->regs->flag, 0);
+
+    /* ADD A, d8 */
+    mem_write16(c->mem, c->regs->pc, 0x3e3c); /* LD A, 3c */
+    mem_write16(c->mem, c->regs->pc +2, 0xc6ff); /* ADD A, ff */
+    mem_write8(c->mem, c->regs->pc +4, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x3b);
+    EXPECT_EQ(c->regs->flag, H_MASK | CY_MASK);
 
 }
 

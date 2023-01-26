@@ -449,8 +449,12 @@ void add_reg(cpu *core, instruction i) {
     return;
   }
 
-  /* 8 bit r1 r2 add */
-  uint8_t og_src = *(get_reg(core->regs, src_reg));
+  uint8_t og_src = 0x00;
+  if (src_reg == _)
+    og_src = i.full_opcode[1]; // ADD A, d8
+  else
+    /* 8 bit r1 r2 add */
+    og_src = *(get_reg(core->regs, src_reg));
   handle_add8_reg(core, og_src, dst_reg, is_adc, false);
 }
 
@@ -1582,6 +1586,11 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
     push(core, out);
     break;
+  case 0xc6: /* ADD A, d8 */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 4, args);
+    add_reg(core, out);
+    break;
   case 0xc8: /* RET Z */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
@@ -1604,6 +1613,11 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 3, 24, args);
     call(core, out, 0, 0);
+    break;
+  case 0xce: /* ADC A, nn */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 4, args);
+    add_reg(core, out);
     break;
 
   default:
