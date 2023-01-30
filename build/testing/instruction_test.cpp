@@ -1139,4 +1139,30 @@ TEST (pushPopTest, pushPop) {
 
 }
 
+TEST (rstTest, rst) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* Write fn at 0x8000 that calls rst */
+    mem_write8(c->mem, 0x8000, 0xc7); /* rst 00 */
+    mem_write8(c->mem, 0x8001, 0x00); 
+
+
+
+    mem_write8(c->mem, c->regs->pc, 0xc3); /* JP 0x8000 */
+    mem_write16(c->mem, c->regs->pc+1, 0x8000);
+
+    run_cpu(c);
+    mem_write8(c->mem, 0x0000, 0x00); /* EXIT */
+    // breakpoint();
+    run_cpu_loop(c);
+
+
+    /* Ensure that address was pushed onto stack */
+    EXPECT_EQ(stack_is_empty(c->stack), false);
+    EXPECT_EQ(stack_peak(c->stack), 0x8001);
+    EXPECT_EQ(c->regs->pc, 0x01); /* Check jump to right position */
+
+}
+
 }

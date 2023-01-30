@@ -47,6 +47,26 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+void jp(cpu *core, uint16_t new_pc);
+
+enum rst_addy { _00, _08, _10, _18, _20, _28, _30, _38 };
+void rst(cpu *core, instruction i, enum rst_addy address) {
+
+  /* Store current pc into stack */
+  if (!stack_push(core->stack, core->regs->pc)) {
+    printf("Could not store address onto stack for rst\n");
+    exit(-1);
+  }
+
+  switch (address) {
+  case _00:
+    jp(core, 0x00);
+    break;
+  default:
+    printf("Incorrect address type passed in to rst ");
+    exit(-1);
+  }
+}
 
 void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }
 
@@ -541,6 +561,8 @@ void set_instruction_vars(cpu *core, instruction *i, uint8_t len,
   core->regs->pc += len;
   i->args = args;
 }
+
+instruction exec_prefix(cpu *core, instruction i);
 
 /* Given an opcode, decodes the instruction and executes it on the cpu */
 instruction exec_next_instruction(cpu *core, uint8_t opcode) {
@@ -1591,6 +1613,11 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 2, 4, args);
     add_reg(core, out);
     break;
+  case 0xc7: /* RST x00 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _00);
+    break;
   case 0xc8: /* RET Z */
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
@@ -1603,6 +1630,11 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     break;
   case 0xca: /* JP Z */
     jump(core, out, Z_MASK, true);
+    break;
+  case 0xcb: /* PREFIX */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 24, args);
+    exec_prefix(core, out);
     break;
   case 0xcc: /* CALL Z */
     args = new_args(_, _, __, __);
@@ -1626,4 +1658,9 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   }
 
   return out;
+}
+
+instruction exec_prefix(cpu *core, instruction i) {
+  printf("Not implemented yet\n");
+  exit(-1);
 }
