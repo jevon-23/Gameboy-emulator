@@ -40,12 +40,14 @@ TEST (subCarryTest, subCarry) {
     EXPECT_EQ(c->regs->flag, N_MASK);
 
     /* SBC A, 3A */
-    // set_all_flags(c->regs, 0, 0, 0, 0);
-    // mem_write16(c->mem, c->regs->pc, 0x3e3b); /* LD A, 3b */
-    // mem_write16(c->mem, c->regs->pc, 0xde3a); /* SBC A, 3a */
-    // run_cpu_loop(c);
-    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
-    // EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e3b); /* LD A, 3b */
+    mem_write8(c->mem, c->regs->pc +2, 0x37); /* SCF: set carry */
+    mem_write16(c->mem, c->regs->pc +3, 0xde3a); /* SBC A, 3a */
+    mem_write8(c->mem, c->regs->pc +5, 0x0); /* EXIT */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
 
     /* SBC A, (HL) */
     set_all_flags(c->regs, 0, 0, 0, 0);
@@ -80,14 +82,14 @@ TEST (subTest, sub) {
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
     EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
 
-    /* SUB r8 - Not implemented */
-    // mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
-    // mem_write16(c->mem, c->regs->pc +2, 0xd60f); /* SUB 0f */
-    // mem_write8(c->mem, c->regs->pc +4, 0x00); 
-    // run_cpu_loop(c);
+    /* SUB r8 */
+    mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
+    mem_write16(c->mem, c->regs->pc +2, 0xd60f); /* SUB 0f */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); 
+    run_cpu_loop(c);
 
-    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
-    // EXPECT_EQ(c->regs->flag, H_MASK | N_MASK);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x2f);
+    EXPECT_EQ(c->regs->flag, H_MASK | N_MASK);
 
     /* SUB (HL) */
     mem_write16(c->mem, c->regs->pc, 0x3e3e); /* LD A, 3e */
@@ -1040,6 +1042,17 @@ TEST (jpTest, jp) {
 
     run_cpu_loop(c);
     EXPECT_EQ(c->regs->pc, 0xbeef +1);
+
+    mem_write8(c->mem, 0xc0fe, 0x00);
+
+    mem_write8(c->mem, c->regs->pc, 0x37); /* SCF: set carry */
+    mem_write8(c->mem, c->regs->pc +1, 0xd2); /* JP NC 0x49e0 -> fail*/
+    mem_write16(c->mem, c->regs->pc +2, 0x49e6);
+    mem_write8(c->mem, c->regs->pc + 4, 0xda); /* JP C 0xc0fe */
+    mem_write16(c->mem, c->regs->pc +5, 0xc0fe);
+    mem_write8(c->mem, c->regs->pc +7, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, 0xc0fe +1);
 }
 
 TEST (callTest, call) {
@@ -1106,11 +1119,36 @@ TEST (callRetTest, callRet) {
     mem_write8(c->mem, c->regs->pc + 3, 0xc4);  /* CALL NZ c0fe -> jump */
     mem_write16(c->mem, c->regs->pc + 4, 0xc0fe); 
     mem_write8(c->mem, c->regs->pc + 6, 0x00);  /* EXIT */
+    uint16_t expected_pc = c->regs->pc + 7;
 
     run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, expected_pc);
     EXPECT_EQ(c->regs->flag, Z_MASK | H_MASK);
     EXPECT_EQ(*(get_reg(c->regs, _E)), 0x0f);
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0xb3);
+
+    /* Turn off all flags */
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    
+    /* 0x9999 fn. */
+    mem_write8(c->mem, 0x9999, 0x37); /* Set the C flag */
+    mem_write8(c->mem, 0x9999 + 1, 0xd0); /* ret NC -> fail */
+    mem_write16(c->mem, 0x9999 + 2, 0x06af); /* LD B, 0xaf */
+    mem_write8(c->mem, 0x9999 + 4, 0xd8); /* ret C -> jump */
+    mem_write8(c->mem, 0x9999 + 5, 0x00); /* EXIT */
+
+    /* Test NC & C */
+    mem_write8(c->mem, c->regs->pc, 0xdc); /* CALL C beef -> fail */
+    mem_write16(c->mem, c->regs->pc + 1, 0xbeef); 
+    mem_write8(c->mem, c->regs->pc + 3, 0xd4);  /* CALL NC 9999 -> jump */
+    mem_write16(c->mem, c->regs->pc + 4, 0x9999); 
+    mem_write8(c->mem, c->regs->pc + 6, 0x00);  /* EXIT */
+    expected_pc = c->regs->pc + 7;
+
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->pc, expected_pc);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0xaf);
 }
 
 TEST (pushPopTest, pushPop) {
@@ -1137,6 +1175,25 @@ TEST (pushPopTest, pushPop) {
     EXPECT_EQ(stack_is_empty(c->stack), true);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xc0fe);
 
+    mem_write8(c->mem, c->regs->pc, 0x11); /* load DE 0xbeef */
+    mem_write16(c->mem, c->regs->pc+1, 0xabcd);
+    mem_write8(c->mem, c->regs->pc+3, 0xd5); /* PUSH DE */
+    mem_write8(c->mem, c->regs->pc+4, 0x00);
+
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_is_empty(c->stack), false);
+    EXPECT_EQ(stack_peak(c->stack), 0xabcd);
+    EXPECT_EQ(stack_peak(c->stack), get_reg_pair(c->regs, _DE));
+
+    /* Change the value in the stack pointer */
+    mem_write8(c->mem, c->regs->pc, 0x31); /* load SP 0x444a */
+    mem_write16(c->mem, c->regs->pc+1, 0x444a);
+    mem_write8(c->mem, c->regs->pc+3, 0xd1); /* POP DE */
+    mem_write8(c->mem, c->regs->pc+4, 0x00); /* EXIT */
+
+    run_cpu_loop(c);
+    EXPECT_EQ(stack_is_empty(c->stack), true);
+    EXPECT_EQ(get_reg_pair(c->regs, _DE), 0x444a);
 }
 
 TEST (rstTest, rst) {
@@ -1154,7 +1211,6 @@ TEST (rstTest, rst) {
 
     run_cpu(c);
     mem_write8(c->mem, 0x0000, 0x00); /* EXIT */
-    // breakpoint();
     run_cpu_loop(c);
 
 
@@ -1163,6 +1219,43 @@ TEST (rstTest, rst) {
     EXPECT_EQ(stack_peak(c->stack), 0x8001);
     EXPECT_EQ(c->regs->pc, 0x01); /* Check jump to right position */
 
+    /* Write fn at 0x8000 that calls rst */
+    mem_write8(c->mem, 0x8000, 0xcf); /* rst 08 */
+    mem_write8(c->mem, 0x8001, 0x00); 
+
+    mem_write8(c->mem, 0x0008, 0x00); /* EXIT */
+
+    mem_write8(c->mem, c->regs->pc, 0xc3); /* JP 0x8000 */
+    mem_write16(c->mem, c->regs->pc+1, 0x8000);
+
+    run_cpu_loop(c);
+
+    EXPECT_EQ(c->stack->len, 2);
+    EXPECT_EQ(stack_peak(c->stack), 0x8001);
+    EXPECT_EQ(c->regs->pc, 0x09); /* Check jump to right position */
+
+}
+
+TEST (retiTest, reti) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* Interrupt state */
+    c->state = _INTERRUPTED;
+
+    /* Test return address */
+    mem_write16(c->mem, 0xbeef, 0x26af); /* LD H, af */
+    mem_write8(c->mem, 0xbeef + 2, 0x00);
+
+    /* Push 0xbeef onto stack to be popped off */
+    stack_push(c->stack, 0xbeef);
+    mem_write8(c->mem, c->regs->pc, 0xd9); /* RETI */
+    mem_write8(c->mem, c->regs->pc +1, 0x0);
+    run_cpu_loop(c);
+
+    EXPECT_EQ(*(get_reg(c->regs, _H)), 0xaf);
+    EXPECT_EQ(c->regs->pc, 0xbeef + 3);
+    
 }
 
 }

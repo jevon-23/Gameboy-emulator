@@ -49,8 +49,16 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 void jp(cpu *core, uint16_t new_pc);
 
-enum rst_addy { _00, _08, _10, _18, _20, _28, _30, _38 };
-void rst(cpu *core, instruction i, enum rst_addy address) {
+// enum rst_addy { _00, _08, _10, _18, _20, _28, _30, _38 };
+const uint8_t _00 = 0x00;
+const uint8_t _08 = 0x08;
+const uint8_t _10 = 0x10;
+const uint8_t _18 = 0x18;
+const uint8_t _20 = 0x20;
+const uint8_t _28 = 0x28;
+const uint8_t _30 = 0x30;
+const uint8_t _38 = 0x38;
+void rst(cpu *core, instruction i, const uint8_t address) {
 
   /* Store current pc into stack */
   if (!stack_push(core->stack, core->regs->pc)) {
@@ -58,14 +66,8 @@ void rst(cpu *core, instruction i, enum rst_addy address) {
     exit(-1);
   }
 
-  switch (address) {
-  case _00:
-    jp(core, 0x00);
-    break;
-  default:
-    printf("Incorrect address type passed in to rst ");
-    exit(-1);
-  }
+  /* Jump */
+  jp(core, address);
 }
 
 void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }
@@ -121,6 +123,12 @@ void ret(cpu *core, instruction i, uint8_t mask, bool set) {
 
   uint16_t new_pc = stack_pop(core->stack);
   jp(core, new_pc);
+
+  // If we are calling reti
+  if (i.opcode == 0xd9 && core->state == _INTERRUPTED) {
+    core->state = _RUNNING;
+    core->regs->interrupt_flag = core->regs->stored_interrupt_flag;
+  }
 }
 
 /* Private enum for bitwise functions */
@@ -378,7 +386,12 @@ void sub_reg(cpu *core, instruction i) {
     return;
   }
 
-  uint8_t src = *(get_reg(core->regs, src_reg));
+  uint8_t src = 0x00;
+  if (src_reg == _)
+    src = i.full_opcode[1];
+  else
+    src = *(get_reg(core->regs, src_reg));
+
   handle_sub8_reg(core, src, dst_reg, is_sbc, false);
 }
 
@@ -1650,6 +1663,78 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     args = new_args(_, _A, __, __);
     set_instruction_vars(core, &out, 2, 4, args);
     add_reg(core, out);
+    break;
+  case 0xcf: /* RST x08 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _08);
+    break;
+
+    /***************/
+    /* 0xd0 - 0xdf */
+    /***************/
+  case 0xd0: /* RET NC */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out, CY_MASK, false);
+    break;
+  case 0xd1: /* POP DE */
+    args = new_args(_, _, __, _DE);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    pop(core, out);
+    break;
+  case 0xd2: /* JP NC */
+    jump(core, out, CY_MASK, false);
+    break;
+  case 0xd4: /* CALL NC */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 3, 24, args);
+    call(core, out, CY_MASK, false);
+    break;
+  case 0xd5: /* PUSH DE */
+    args = new_args(_, _, __, _DE);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    push(core, out);
+    break;
+  case 0xd6: /* SUB A, d8 */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0xd7: /* RST x10 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _10);
+    break;
+  case 0xd8: /* RET C */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out, CY_MASK, true);
+    break;
+  case 0xd9: /* RETI */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 20, args); // # cycles => 20/8
+    ret(core, out, 0, 0);
+    break;
+  case 0xda: /* JP C */
+    jump(core, out, CY_MASK, true);
+    break;
+  // case 0xdb: Does not exist
+  case 0xdc: /* CALL CY */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 3, 24, args);
+    call(core, out, CY_MASK, true);
+    break;
+  // case 0xdd: Does not exist
+  case 0xde: /* SBC A, nn */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 4, args);
+    sub_reg(core, out);
+    break;
+  case 0xdf: /* RST x18 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _18);
     break;
 
   default:

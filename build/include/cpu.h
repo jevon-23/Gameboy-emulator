@@ -19,13 +19,15 @@ typedef struct registers {
   uint8_t *h;
   uint8_t *l;
   uint8_t flag; /* ZNHC.... */
+  uint8_t interrupt_flag; /* VLTSP... */
+  uint8_t stored_interrupt_flag; /* VLTSP... */
 } registers;
 
 enum reg_pairs {_AF, _BC, _DE, _HL, _SP, _ADDY, __};
 
 enum reg_enum { _A, _B, _C, _D, _E, _F, _H, _L, _1, _ };
 
-enum STATE {_STOP, _RUNNING, _HALTED };
+enum STATE {_STOP, _RUNNING, _HALTED, _INTERRUPTED };
 
 /* CPU struct */
 typedef struct cpu {

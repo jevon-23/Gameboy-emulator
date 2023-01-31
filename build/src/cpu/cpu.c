@@ -34,6 +34,8 @@ registers *new_registers() {
   out->h = (out->gp_regs + 6);
   out->l = (out->gp_regs + 7);
   out->flag = 0x00;
+  out->interrupt_flag = 0x00;
+  out->stored_interrupt_flag = 0x00;
   out->pc = GAME_CODE_BANK_0_START;
   return out;
 }
