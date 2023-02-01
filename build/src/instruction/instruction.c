@@ -141,7 +141,7 @@ void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {
   enum reg_pairs src_pair = i.args.src_pair;
 
   if (dst_reg != _A) {
-    printf("A is not the destination register\n");
+    printf("A is not the destination register for logical exp \n");
     exit(-1);
   }
 
@@ -160,6 +160,9 @@ void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {
   } else if (src_reg != _) {
     /* AND A, srcReg */
     src = *(get_reg(core->regs, src_reg));
+  } else {
+    /* AND, nn */
+    src = i.full_opcode[1];
   }
 
   switch (fn_type) {
@@ -524,17 +527,45 @@ void load_reg(cpu *core, instruction i) {
       /* (1.1) Loading nn into src_pair */
       uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
       set_reg_pair(core->regs, src_pair, nn);
+      return;
     } else if (src_reg != _ && dst_reg == _) {
       /* (1.2) Loading a value from address into a register */
       uint16_t address = get_reg_pair(core->regs, src_pair);
       set_reg(core->regs, src_reg, mem_read8(core->mem, address));
-    } else {
+      return;
+    } else if (src_pair != _ADDY) { /* opcode <= 0xe0 */
       /* (1.3) Loading a value a register into an address */
       uint16_t address = get_reg_pair(core->regs, src_pair);
       mem_write8(core->mem, address, *(get_reg(core->regs, dst_reg)));
+      return;
     }
+  }
+
+  /* Handle loads in >= 0xe0 */
+  if (src_pair == _ADDY || dst_pair == _ADDY) {
+    uint8_t src = 0x00;
+    /* Get the source */
+    if (src_reg == _) {
+      src = mem_read8(core->mem, 0xff00 + i.full_opcode[1]);
+    } else {
+      src = *(get_reg(core->regs, src_reg));
+    }
+
+    /* Find desired location */
+    uint16_t dst = 0xff00;
+    if (dst_reg == _)
+      dst += i.full_opcode[1];
+    else
+      dst += *(get_reg(core->regs, dst_reg));
+
+    /* Write */
+    if (dst_pair == _ADDY)
+      mem_write8(core->mem, dst, src);
+    else
+      set_reg(core->regs, dst_reg, src);
     return;
   }
+
   /* Load from src_reg => dst_reg */
   if (src_reg != _ && dst_reg != _) {
     set_reg(core->regs, dst_reg, *(get_reg(core->regs, src_reg)));
@@ -1735,6 +1766,51 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     args = new_args(_, _, __, __);
     set_instruction_vars(core, &out, 1, 16, args);
     rst(core, out, _18);
+    break;
+
+    /***************/
+    /* 0xe0 - 0xef */
+    /***************/
+  case 0xe0: /* LDH (nn), A */
+    args = new_args(_A, _, __, _ADDY);
+    set_instruction_vars(core, &out, 2, 16, args);
+    load_reg(core, out);
+    break;
+  case 0xe1: /* POP HL */
+    args = new_args(_, _, __, _HL);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    pop(core, out);
+    break;
+  case 0xe2: /* LDH (C), A */
+    args = new_args(_A, _C, __, _ADDY);
+    set_instruction_vars(core, &out, 1, 16, args);
+    load_reg(core, out);
+    break;
+    // case 0xe3: /* Doesn't exist */
+    // case 0xe4: /* Doesn't exist */
+  case 0xe5: /* PUSH HL */
+    args = new_args(_, _, __, _HL);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    push(core, out);
+    break;
+  case 0xe6:
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    logic_reg(core, out, _AND);
+    break;
+  case 0xe7: /* RST x20 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _20);
+    break;
+
+    /***************/
+    /* 0xf0 - 0xff */
+    /***************/
+  case 0xf0: /* LDH A, (nn) */
+    args = new_args(_, _A, _ADDY, __);
+    set_instruction_vars(core, &out, 2, 16, args);
+    load_reg(core, out);
     break;
 
   default:

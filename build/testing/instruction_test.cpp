@@ -871,13 +871,13 @@ TEST (andTest, andT) {
     EXPECT_EQ(c->regs->flag, H_MASK);
 
     /* AND A, x38 */
-    // set_all_flags(c->regs, 0, 0, 0, 0);
-    // mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
-    // mem_write16(c->mem, c->regs->pc +2, 0xe638); /* AND A, 38 */
-    // mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
-    // run_cpu_loop(c);
-    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x18);
-    // EXPECT_EQ(c->regs->flag, H_MASK);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
+    mem_write16(c->mem, c->regs->pc +2, 0xe638); /* AND A, 38 */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x18);
+    EXPECT_EQ(c->regs->flag, H_MASK);
 
 
     /* AND A, (HL) */
@@ -1256,6 +1256,46 @@ TEST (retiTest, reti) {
     EXPECT_EQ(*(get_reg(c->regs, _H)), 0xaf);
     EXPECT_EQ(c->regs->pc, 0xbeef + 3);
     
+}
+
+TEST (lastLoadTest, lastLoad) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    /* LDH (nn), A */
+    mem_write16(c->mem, c->regs->pc, 0x3ed0);  /* LD A, d0 */
+    mem_write16(c->mem, c->regs->pc +2, 0xe0b3);  /* LDH (b3), _A */
+    mem_write8(c->mem, c->regs->pc +4, 0x00);  /* EXIT */
+    run_cpu_loop(c);
+
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xd0);
+    EXPECT_EQ(mem_read8(c->mem, 0xffb3), 0xd0);
+
+    /* Write a byte to 0xff8b */
+    mem_write8(c->mem, 0xff8b, 0x45);
+
+    /* LDH A, (nn) */
+    mem_write16(c->mem, c->regs->pc, 0xf08b); // LDH A, (8b)
+    mem_write8(c->mem, c->regs->pc +2, 0x00); // EXIT
+    run_cpu_loop(c);
+
+    EXPECT_EQ(mem_read8(c->mem, 0xff8b), 0x45);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x45);
+
+    /* LDH (C), A */
+
+    mem_write8(c->mem, 0xffb3, 0x23); // Write a byte into 0xffb3
+
+    mem_write16(c->mem, c->regs->pc, 0x0eb3); // LD C, b3
+    mem_write8(c->mem, c->regs->pc +2, 0xe2); // LDH (C), A
+    mem_write8(c->mem, c->regs->pc +3, 0x00);
+
+    run_cpu_loop(c);
+
+    EXPECT_EQ(mem_read8(c->mem, 0xffb3), 0x45);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x45);
+
+
 }
 
 }
