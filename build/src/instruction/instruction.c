@@ -479,6 +479,16 @@ void add_reg(cpu *core, instruction i) {
     return;
   }
 
+  if (dst_pair == _SP) {
+    uint8_t src = i.full_opcode[1];
+    uint16_t og_dst = stack_peak(core->stack);
+    RV16 add_result = add_overflow16(og_dst, src);
+    set_all_flags(core->regs, 2, false, check_half_carry16(src, og_dst, true),
+                  add_result.over_flow);
+    set_stack_pointer(core->stack, add_result.rv);
+    return;
+  }
+
   /* (2) 8 Bit add instructions */
   if (dst_reg == _1) {
     handle_add8_reg(core, 1, src_reg, false, true);
@@ -545,15 +555,19 @@ void load_reg(cpu *core, instruction i) {
   if (src_pair == _ADDY || dst_pair == _ADDY) {
     uint8_t src = 0x00;
     /* Get the source */
-    if (src_reg == _) {
+    if (src_reg == _ && i.opcode == 0xfa)
+      src =
+          mem_read8(core->mem, conv8_to16(i.full_opcode[1], i.full_opcode[2]));
+    else if (src_reg == _)
       src = mem_read8(core->mem, 0xff00 + i.full_opcode[1]);
-    } else {
+    else
       src = *(get_reg(core->regs, src_reg));
-    }
 
     /* Find desired location */
     uint16_t dst = 0xff00;
-    if (dst_reg == _)
+    if (dst_reg == _ && i.opcode == 0xea)
+      dst = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+    else if (dst_reg == _)
       dst += i.full_opcode[1];
     else
       dst += *(get_reg(core->regs, dst_reg));
@@ -1803,6 +1817,34 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 1, 16, args);
     rst(core, out, _20);
     break;
+  case 0xe8: /* ADD SP, nn */
+    args = new_args(_, _, __, _SP);
+    set_instruction_vars(core, &out, 2, 4, args);
+    add_reg(core, out);
+    break;
+  case 0xe9: /* JP HL */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    jp(core, get_reg_pair(core->regs, _HL));
+    break;
+  case 0xea: /* LD (nnnn), A */
+    args = new_args(_A, _, __, _ADDY);
+    set_instruction_vars(core, &out, 3, 4, args);
+    load_reg(core, out);
+    break;
+    // case 0xeb: /* N/A */
+    // case 0xec: /* N/A */
+    // case 0xed: /* N/A */
+  case 0xee:
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    logic_reg(core, out, _XOR);
+    break;
+  case 0xef: /* RST x28 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _28);
+    break;
 
     /***************/
     /* 0xf0 - 0xff */
@@ -1810,6 +1852,12 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
   case 0xf0: /* LDH A, (nn) */
     args = new_args(_, _A, _ADDY, __);
     set_instruction_vars(core, &out, 2, 16, args);
+    load_reg(core, out);
+    break;
+
+  case 0xfa: /* LDH A, (nnnn) */
+    args = new_args(_, _A, _ADDY, __);
+    set_instruction_vars(core, &out, 3, 4, args);
     load_reg(core, out);
     break;
 
