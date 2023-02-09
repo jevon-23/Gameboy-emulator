@@ -961,13 +961,13 @@ TEST (orTest, orT) {
     EXPECT_EQ(c->regs->flag, 0);
 
     /* or A, x03 */
-    // set_all_flags(c->regs, 0, 0, 0, 0);
-    // mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
-    // mem_write16(c->mem, c->regs->pc +2, 0xee03); /* or A, 0f */
-    // mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
-    // run_cpu_loop(c);
-    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x5b);
-    // EXPECT_EQ(c->regs->flag, 0);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e5a); /* LD A, 5a */
+    mem_write16(c->mem, c->regs->pc +2, 0xf603); /* or A, 03 */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x5b);
+    EXPECT_EQ(c->regs->flag, 0);
 
 
     /* or A, (HL) */
@@ -1001,13 +1001,14 @@ TEST (cpTest, cpT) {
     EXPECT_EQ(c->regs->flag, H_MASK | N_MASK);
 
     /* cp A, x03 */
-    // set_all_flags(c->regs, 0, 0, 0, 0);
-    // mem_write16(c->mem, c->regs->pc, 0x3e3c); /* LD A, 3c */
-    // mem_write16(c->mem, c->regs->pc +2, 0xfe03); /* cp A, 0f */
-    // mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
-    // run_cpu_loop(c);
-    // EXPECT_EQ(*(get_reg(c->regs, _A)), 0x5b);
-    // EXPECT_EQ(c->regs->flag, 0);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e3c); /* LD A, 3c */
+    mem_write16(c->mem, c->regs->pc +2, 0xfe3c); /* cp A, 3c */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* EXIT */
+    run_cpu_loop(c);
+
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x3c);
+    EXPECT_EQ(c->regs->flag, Z_MASK | N_MASK);
 
 
     /* cp A, (HL) */
@@ -1305,11 +1306,20 @@ TEST (lastLoadTest, lastLoad) {
     EXPECT_EQ(mem_read8(c->mem, 0xffb3), 0x45);
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x45);
 
+    /* LDH A, (C) */
+    mem_write8(c->mem, 0xffb3, 0xab);
+
+    mem_write8(c->mem, c->regs->pc, 0xf2); /* LDH A, (C) */
+    mem_write8(c->mem, c->regs->pc + 1, 0x00);
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read8(c->mem, 0xffb3), 0xab);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xab);
+
+
     /* LDH (nnnn), A */
     mem_write16(c->mem, c->regs->pc, 0x3e23); // LD A, 0x23
     mem_write8(c->mem, c->regs->pc + 2, 0xea); // LDH nnnn, A
     mem_write16(c->mem, c->regs->pc + 3, 0xbeef); // nnnn
-    breakpoint();
 
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x23);
@@ -1342,4 +1352,50 @@ TEST (jumpHLTest, jumpHL) {
 
 }
 
+TEST (diEiTest, diEi) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    
+    mem_write16(c->mem, c->regs->pc, 0xfb00); /* ei */
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->interrupt_master_enable, true);
+
+    mem_write16(c->mem, c->regs->pc, 0xf300); /* di */
+    run_cpu_loop(c);
+    EXPECT_EQ(c->regs->interrupt_master_enable, false);
+}
+
+TEST (loadSPHLTest, loadSPHL) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write8(c->mem, c->regs->pc, 0x01); /* LD BC, 0xbeef */
+    mem_write16(c->mem, c->regs->pc + 1, 0xbeef); /* nnnn */
+    mem_write8(c->mem, c->regs->pc + 3, 0xc5); /* PUSH BC */
+    mem_write8(c->mem, c->regs->pc + 4, 0x21); /* LD HL, 0xc0fe */
+    mem_write16(c->mem, c->regs->pc + 5, 0xc0fe); /* nnnn */
+    mem_write8(c->mem, c->regs->pc + 7, 0xf9); /* LD SP, HL */
+    mem_write8(c->mem, c->regs->pc + 8, 0x00); /* nnnn */
+    run_cpu_loop(c);
+
+    EXPECT_EQ(stack_peak(c->stack), 0xc0fe);
+
+}
+
+TEST (loadHLSPplusRTest, loadHLSPplusR) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+
+    mem_write8(c->mem, c->regs->pc, 0x01); /* LD BC, 0xfff8 */
+    mem_write16(c->mem, c->regs->pc + 1, 0xfff8); /* fff8 */
+    mem_write8(c->mem, c->regs->pc + 3, 0xc5); /* PUSH BC */
+    mem_write16(c->mem, c->regs->pc + 4, 0xf802); /* LD HL, SP + r8 */
+    mem_write8(c->mem, c->regs->pc + 6, 0x00); /* nnnn */
+    breakpoint();
+    run_cpu_loop(c);
+
+    EXPECT_EQ(get_reg_pair(c->regs, _HL), 0xfffa);
+    EXPECT_EQ(c->regs->flag, 0);
+
+}
 }

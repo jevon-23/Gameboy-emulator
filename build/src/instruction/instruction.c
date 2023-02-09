@@ -36,6 +36,10 @@ bool check_half_carry8(uint8_t v1, uint8_t v2, bool is_add) {
   return ((v1 & 0xf) - (v2 & 0xf) & 0x10) == 0x10;
 }
 
+bool check_overflow_16(uint16_t v1, int8_t v2) {
+  return 0xffff - v2 < v1 ? true : false;
+}
+
 bool check_zero(uint16_t v) { return v == 0; }
 
 bool check_carry8_shift(uint8_t v1, bool left_shift) {
@@ -47,6 +51,18 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+
+/* TODO: What else do we need to add */
+void ei(cpu *core, instruction i) {
+  core->regs->interrupt_master_enable = true;
+}
+
+/* TODO: What else do we need to add */
+void di(cpu *core, instruction i) {
+  /* Reset master interrupt flag */
+  core->regs->interrupt_master_enable = false;
+}
+
 void jp(cpu *core, uint16_t new_pc);
 
 // enum rst_addy { _00, _08, _10, _18, _20, _28, _30, _38 };
@@ -127,7 +143,8 @@ void ret(cpu *core, instruction i, uint8_t mask, bool set) {
   // If we are calling reti
   if (i.opcode == 0xd9 && core->state == _INTERRUPTED) {
     core->state = _RUNNING;
-    core->regs->interrupt_flag = core->regs->stored_interrupt_flag;
+    core->regs->interrupt_enable_flag =
+        core->regs->stored_interrupt_enable_flag;
   }
 }
 
@@ -479,8 +496,9 @@ void add_reg(cpu *core, instruction i) {
     return;
   }
 
+  /* Handle ADD SP, signed 8-bit */
   if (dst_pair == _SP) {
-    uint8_t src = i.full_opcode[1];
+    int src = (int)i.full_opcode[1];
     uint16_t og_dst = stack_peak(core->stack);
     RV16 add_result = add_overflow16(og_dst, src);
     set_all_flags(core->regs, 2, false, check_half_carry16(src, og_dst, true),
@@ -514,17 +532,32 @@ void load_reg(cpu *core, instruction i) {
   /* (1) Doing a load with a src_pair */
   if (src_pair != __) {
     if (src_pair == _SP) {
-      /* Loading nn into stack pointer */
-      uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
-      if (!stack_is_empty(core->stack)) {
-        set_stack_pointer(core->stack, nn);
-        return;
+      if (dst_pair != __ && src_reg == _IMM) {
+        /* LD HL, SP + r8 */
+        uint16_t src = stack_peak(core->stack);
+        int8_t imm = (int8_t)i.full_opcode[1];
+        set_reg_pair(core->regs, _HL, src + imm);
+        set_all_flags(core->regs, 0, 0, check_half_carry16(src, imm, false),
+                      check_overflow_16(src, imm));
+      } else {
+        /* Loading nn into stack pointer */
+        uint16_t nn = conv8_to16(i.full_opcode[1], i.full_opcode[2]);
+        if (!stack_is_empty(core->stack)) {
+          set_stack_pointer(core->stack, nn);
+          return;
+        }
+        /* Allow for push if stack is not allocated */
+        if (!stack_push(core->stack, nn)) {
+          printf("Stack overflow!\n");
+          exit(-1);
+        }
       }
-      /* Allow for push if stack is not allocated */
-      if (!stack_push(core->stack, nn)) {
-        printf("Stack overflow!\n");
-        exit(-1);
-      }
+      return;
+
+    } else if (dst_pair == _SP) {
+      uint16_t src = get_reg_pair(core->regs, src_pair);
+      set_stack_pointer(core->stack, src);
+      return;
     }
 
     if (src_reg == _ && dst_reg == _) {
@@ -553,15 +586,18 @@ void load_reg(cpu *core, instruction i) {
 
   /* Handle loads in >= 0xe0 */
   if (src_pair == _ADDY || dst_pair == _ADDY) {
-    uint8_t src = 0x00;
+    uint16_t src = 0x00;
     /* Get the source */
     if (src_reg == _ && i.opcode == 0xfa)
       src =
           mem_read8(core->mem, conv8_to16(i.full_opcode[1], i.full_opcode[2]));
     else if (src_reg == _)
       src = mem_read8(core->mem, 0xff00 + i.full_opcode[1]);
-    else
+    else {
       src = *(get_reg(core->regs, src_reg));
+      if (src_pair == _ADDY)
+        src = mem_read8(core->mem, 0xff00 + src);
+    }
 
     /* Find desired location */
     uint16_t dst = 0xff00;
@@ -1854,11 +1890,68 @@ instruction exec_next_instruction(cpu *core, uint8_t opcode) {
     set_instruction_vars(core, &out, 2, 16, args);
     load_reg(core, out);
     break;
+  case 0xf1: /* POP AF */
+    args = new_args(_, _, __, _AF);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    pop(core, out);
+    break;
+  case 0xf2: /* LDH A, (C) */
+    args = new_args(_C, _A, _ADDY, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    load_reg(core, out);
+    break;
+  case 0xf3: /* DI */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    di(core, out);
+    break;
 
+  // case 0xf4:
+  case 0xf5: /* PUSH HL */
+    args = new_args(_, _, __, _AF);
+    set_instruction_vars(core, &out, 1, 12, args); // # cycles => 20/8
+    push(core, out);
+    break;
+  case 0xf6:
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    logic_reg(core, out, _OR);
+    break;
+  case 0xf7: /* RST x30 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _30);
+    break;
+
+  case 0xf8: /* LD HL, SP + r8 */
+    args = new_args(_IMM, _, _SP, _HL);
+    set_instruction_vars(core, &out, 2, 8, args);
+    load_reg(core, out);
+    break;
+  case 0xf9: /* LD SP, HL */
+    args = new_args(_, _, _HL, _SP);
+    set_instruction_vars(core, &out, 1, 8, args);
+    load_reg(core, out);
+    break;
   case 0xfa: /* LDH A, (nnnn) */
     args = new_args(_, _A, _ADDY, __);
     set_instruction_vars(core, &out, 3, 4, args);
     load_reg(core, out);
+    break;
+  case 0xfb: /* EI */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 4, args);
+    ei(core, out);
+    break;
+  case 0xfe: /* CP A, imm */
+    args = new_args(_, _A, __, __);
+    set_instruction_vars(core, &out, 2, 4, args);
+    logic_reg(core, out, _CP);
+    break;
+  case 0xff: /* RST x38 */
+    args = new_args(_, _, __, __);
+    set_instruction_vars(core, &out, 1, 16, args);
+    rst(core, out, _38);
     break;
 
   default:
