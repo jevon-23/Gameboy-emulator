@@ -327,7 +327,9 @@ void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,
     uint16_t new_hl = left_shift ? (hl) << 1 : (hl) >> 1;
 
     // if it is not a carry, then we update
-    if (!is_carry || (is_carry && get_flag(core->regs, CY_MASK)))
+    if (is_prefix && !is_carry && get_flag(core->regs, CY_MASK))
+      new_hl = left_shift ? ((new_hl) | 1) : (new_hl) | (1 << 15);
+    else if ((is_prefix && is_carry) || (get_flag(core->regs, CY_MASK)))
       new_hl =
           left_shift ? ((new_hl) | replace >> 15) : (new_hl) | (replace << 15);
 
@@ -342,23 +344,26 @@ void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,
 
   // The bit that has been shifted off
   uint8_t replace = left_shift ? (*r) & 0x80 : (*r) & 0x01;
-
   printf("replace = %x\n", replace);
 
   /* New value of the register */
   uint8_t new_r = left_shift ? (*r) << 1 : (*r) >> 1;
 
   // if it is not a carry, then we update
-  if (is_prefix || !is_carry || (is_carry && get_flag(core->regs, CY_MASK)))
+  if (is_prefix && !is_carry && get_flag(core->regs, CY_MASK))
+    new_r = left_shift ? ((new_r) | 1) : (new_r) | (1 << 7);
+  else if ((is_prefix && is_carry) || (get_flag(core->regs, CY_MASK)))
     new_r = left_shift ? ((new_r) | replace >> 7) : (new_r) | (replace << 7);
 
   /* We don't set the Z flag if we are doing one of the
    * RLCA, RRCA, RLA, RRA */
-  if (i.opcode == 0x07 || i.opcode == 0x17 || i.opcode == 0x0f ||
-      i.opcode == 0x1f)
+  if (!is_prefix && (i.opcode == 0x07 || i.opcode == 0x17 || i.opcode == 0x0f ||
+                     i.opcode == 0x1f))
     set_all_flags(core->regs, false, false, false, replace != 0);
-  else
+  else {
+    printf("setting righ flasg\n");
     set_all_flags(core->regs, check_zero(new_r), false, false, replace != 0);
+  }
 
   set_reg(core->regs, reg, new_r);
 }
@@ -2086,6 +2091,86 @@ instruction exec_prefix(cpu *core, instruction out) {
     args = new_args(_A, _, __, __);
     set_instruction_vars(core, &out, 2, 8, args);
     rotate_reg(core, out, false, true, true);
+    break;
+  case 0x10: /* RL B */
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x11: /* RL C */
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x12: /* RL D */
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x13: /* RL E */
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x14: /* RL H */
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x15: /* RL L */
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x16: /* RL HL */
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x17: /* RL A */
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, true, false, true);
+    break;
+  case 0x18: /* RR B */
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x19: /* RR C */
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1a: /* RLC D */
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1b: /* RR E */
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1c: /* RR H */
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1d: /* RR L */
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1e: /* RR HL */
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
+    break;
+  case 0x1f: /* RR A */
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    rotate_reg(core, out, false, false, true);
     break;
   default:
     printf("Instruction has not been implemeneted yet\n");

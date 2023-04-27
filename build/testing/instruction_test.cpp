@@ -642,7 +642,7 @@ TEST(shiftLeftTest, shiftLeft) {
 
     // 95 = 1001 0101
     // 2b = 0010 1011
-    set_all_flags(c->regs, 0, 0, 0, 0);
+    set_all_flags(c->regs, 0, 0, 0, 1);
     set_reg(c->regs, _A, 0x95);
     mem_write8(c->mem, c->regs->pc, 0x17); /* rla */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
@@ -1430,14 +1430,12 @@ TEST (rlcTest, rlc) {
 }
 
 TEST (rrcTest, rrc) {
-
     memory *m = new_memory();
     cpu *c = new_cpu(m);
     set_all_flags(c->regs, 0, 0, 0, 1);
 
     mem_write16(c->mem, c->regs->pc, 0x0e01); /* LD C nn */
     mem_write16(c->mem, c->regs->pc +2, 0xcb09); /* RRC C -> Shift C */
-    breakpoint();
     run_cpu_loop(c);
     // 0x01 = 0000 0001
     // 0x80 = 1000 0000
@@ -1463,5 +1461,48 @@ TEST (rrcTest, rrc) {
     EXPECT_EQ(c->regs->flag, CY_MASK);
 }
 
+TEST (rlTest, rl) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+
+    mem_write16(c->mem, c->regs->pc, 0x2e80); /* LD L nn */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb15); /* RL L -> Shift L */
+    run_cpu_loop(c);
+    // 0x01 = 0000 0001
+    // 0x80 = 1000 0000
+    EXPECT_EQ(*(get_reg(c->regs, _L)), 0x00);
+    EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x0011); /* LD B, 0x0011 */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb16); // RL HL -> 
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0022);
+    EXPECT_EQ(c->regs->flag, 0x00);
+}
+
+TEST (rrTest, rr) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+
+    mem_write16(c->mem, c->regs->pc, 0x3e01); /* LD A nn */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb1f); /* RR A -> Shift A */
+    run_cpu_loop(c);
+    // 0x01 = 0000 0001
+    // 0x80 = 1000 0000
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x008a); /* LD B, 0x0011 */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb1e); // RR HL -> 
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0045);
+    EXPECT_EQ(c->regs->flag, 0x00);
+}
 
 }
