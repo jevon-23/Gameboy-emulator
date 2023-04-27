@@ -36,6 +36,6 @@ uint16_t mem_read16(memory *m, uint16_t address) {
 
 /* write a game file into memory */
 void write_game_file(memory *mem, aFile gameFile) {
-  memcpy((mem->data + (GAME_ROM_BANK_0_START)), *gameFile.contents,
+  memcpy((mem->data + (GAME_CODE_BANK_0_START)), *gameFile.contents,
          gameFile.fileSize);
 }

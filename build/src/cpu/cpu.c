@@ -16,7 +16,7 @@ cpu *new_cpu(memory *m) {
   out->valid_daa = false;
 
   /* Set the regiseters */
-  out->regs->pc = GAME_ROM_BANK_0_START;
+  out->regs->pc = GAME_CODE_BANK_0_START;
   out->regs->sp = 0x00;
   return out;
 }

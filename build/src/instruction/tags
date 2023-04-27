@@ -4,26 +4,38 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+_00	instruction.c	/^const uint8_t _00 = 0x00;$/;"	v
+_08	instruction.c	/^const uint8_t _08 = 0x08;$/;"	v
+_10	instruction.c	/^const uint8_t _10 = 0x10;$/;"	v
+_18	instruction.c	/^const uint8_t _18 = 0x18;$/;"	v
+_20	instruction.c	/^const uint8_t _20 = 0x20;$/;"	v
+_28	instruction.c	/^const uint8_t _28 = 0x28;$/;"	v
+_30	instruction.c	/^const uint8_t _30 = 0x30;$/;"	v
+_38	instruction.c	/^const uint8_t _38 = 0x38;$/;"	v
 _AND	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 _CP	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 _OR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 _XOR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 add_reg	instruction.c	/^void add_reg(cpu *core, instruction i) {$/;"	f
-call	instruction.c	/^void call(cpu *core, instruction i) {$/;"	f
+call	instruction.c	/^void call(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 cc_jump_relative	instruction.c	/^void cc_jump_relative(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 check_carry8_shift	instruction.c	/^bool check_carry8_shift(uint8_t v1, bool left_shift) {$/;"	f
 check_daa	instruction.c	/^void check_daa(cpu *core, uint8_t rv) {$/;"	f
 check_half_carry16	instruction.c	/^bool check_half_carry16(uint16_t v1, uint16_t v2, bool is_add) {$/;"	f
 check_half_carry8	instruction.c	/^bool check_half_carry8(uint8_t v1, uint8_t v2, bool is_add) {$/;"	f
+check_overflow_16	instruction.c	/^bool check_overflow_16(uint16_t v1, int8_t v2) {$/;"	f
 check_zero	instruction.c	/^bool check_zero(uint16_t v) { return v == 0; }$/;"	f
+di	instruction.c	/^void di(cpu *core, instruction i) {$/;"	f
+ei	instruction.c	/^void ei(cpu *core, instruction i) {$/;"	f
 exec_next_instruction	instruction.c	/^instruction exec_next_instruction(cpu *core, uint8_t opcode) {$/;"	f
+exec_prefix	instruction.c	/^instruction exec_prefix(cpu *core, instruction out) {$/;"	f
 halt	instruction.c	/^void halt(cpu *core, instruction i) {$/;"	f
 handle_add8_reg	instruction.c	/^void handle_add8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 handle_carry	instruction.c	/^bool handle_carry(cpu *core, uint8_t *src) {$/;"	f
 handle_sub8_reg	instruction.c	/^void handle_sub8_reg(cpu *core, uint8_t og_src, enum reg_enum dst_reg,$/;"	f
 is_arithmetic_carry	instruction.c	/^bool is_arithmetic_carry(instruction i) { return (i.opcode & 0x0f) > 0x07; }$/;"	f
 jp	instruction.c	/^void jp(cpu *core, uint16_t new_pc) { core->regs->pc = new_pc; }$/;"	f
-jump	instruction.c	/^void jump(cpu *core, instruction i) {$/;"	f
+jump	instruction.c	/^void jump(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 jump_relative	instruction.c	/^void jump_relative(cpu *core, instruction i, int8_t offset) {$/;"	f
 load_reg	instruction.c	/^void load_reg(cpu *core, instruction i) {$/;"	f
 logic_fn	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	g	file:
@@ -32,8 +44,9 @@ new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum
 noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
 pop	instruction.c	/^void pop(cpu *core, instruction i) {$/;"	f
 push	instruction.c	/^void push(cpu *core, instruction i) {$/;"	f
-ret	instruction.c	/^void ret(cpu *core, instruction i) {$/;"	f
+ret	instruction.c	/^void ret(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
+rotate_reg	instruction.c	/^void rotate_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
+rst	instruction.c	/^void rst(cpu *core, instruction i, const uint8_t address) {$/;"	f
 set_instruction_vars	instruction.c	/^void set_instruction_vars(cpu *core, instruction *i, uint8_t len,$/;"	f
-shift_reg	instruction.c	/^void shift_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
 stop_cpu	instruction.c	/^void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }$/;"	f
 sub_reg	instruction.c	/^void sub_reg(cpu *core, instruction i) {$/;"	f

@@ -38,6 +38,9 @@ int main(int arg, char *argv[]) {
   cpu *core = new_cpu(mem);
   printf("Built a new cpu. Running game loop\n");
 
+  printf("Game contents:\n");
+  // readContents(gameFile);
+
   /* Begin loop */
   while (true) {
     run_cpu(core);

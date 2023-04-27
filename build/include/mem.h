@@ -4,7 +4,7 @@
 #ifndef MEM_H
 #define MEM_H
 
-#define MEMORY_LEN 0x10000
+#define MEMORY_LEN 0x10000000
 typedef struct memory {
   uint8_t data[MEMORY_LEN]; // We want access from 0x0000 - 0xffff
   int length;

@@ -16,11 +16,11 @@ namespace {
 TEST(newInstructionTest, newInstruction) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
-    mem_write8(c->mem, GAME_ROM_BANK_0_START, 0x00);
+    mem_write8(c->mem, GAME_CODE_BANK_0_START, 0x00);
     run_cpu_loop(c);
     // i.fn(c, i);
    
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 1);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 1);
 }
 
 TEST (subCarryTest, subCarry) {
@@ -376,14 +376,14 @@ TEST(jumpRelativeTest, jumpRelative) {
     mem_write8(c->mem, c->regs->pc+ 0x20, 0x00); /* end */
     run_cpu_loop(c);
     /* Have to read 2 bytes before the jump, and 1 for the close */
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 0x20 + 3); 
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 0x20 + 3); 
 
     /* jr nn => backward */
     mem_write8(c->mem, c->regs->pc, 0x18); /* jump relative */
     mem_write8(c->mem, c->regs->pc+1, -0x20); /* nn */
     mem_write8(c->mem, c->regs->pc+1 - 0x20, 0x00); /* end */
     run_cpu_loop(c);
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 6);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 6);
 
     uint16_t new_pc = c->regs->pc;
     /* jr cc nn => dont jump if cc is set */
@@ -437,19 +437,17 @@ TEST(shiftRightTest, shiftRight) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
     /* ld a, nn => 0x06nn */
-    set_reg(c->regs, _A, 0x85);
+    set_reg(c->regs, _A, 0x3b);
+    set_flag(c->regs, CY_MASK, true);
     mem_write8(c->mem, c->regs->pc, 0x0f); /* shift A 1 */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x42);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x9d);
     EXPECT_EQ(c->regs->flag, CY_MASK);
 
-    set_reg(c->regs, _A, 0x44);
-    mem_write8(c->mem, c->regs->pc, 0x0f); /* shift A 1 */
-    mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
-    run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x22);
-    EXPECT_EQ(c->regs->flag, 0);
+    // 3b = 0011 1011
+    // 9d = 1001 1101
+
 }
 
 
@@ -633,19 +631,24 @@ TEST(shiftLeftTest, shiftLeft) {
     memory *m = new_memory();
     cpu *c = new_cpu(m);
     /* ld a, nn => 0x06nn */
+    //85 = 1000 0101
+    //0a = 0000 1010
     set_reg(c->regs, _A, 0x85);
-    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
+    mem_write8(c->mem, c->regs->pc, 0x07); /* rlca */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
     EXPECT_EQ(*(get_reg(c->regs, _A)), 0x0A);
     EXPECT_EQ(c->regs->flag, CY_MASK);
 
-    set_reg(c->regs, _A, 0x45);
-    mem_write8(c->mem, c->regs->pc, 0x07); /* shift A 1 */
+    // 95 = 1001 0101
+    // 2b = 0010 1011
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    set_reg(c->regs, _A, 0x95);
+    mem_write8(c->mem, c->regs->pc, 0x17); /* rla */
     mem_write8(c->mem, c->regs->pc+1, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x8A);
-    EXPECT_EQ(c->regs->flag, 0);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x2b);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
 }
 
 TEST(load8Test, load8) {
@@ -760,9 +763,8 @@ TEST(inc16Test, inc16) {
     mem_write8(c->mem, c->regs->pc+3, 0x03); /* Increase BC + 1 */
     mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 5);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 5);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef+1);
-
     /* ld BC, nnnn => 0x01nnnn */
     mem_write8(c->mem, c->regs->pc, 0x01); /* load BC nnnn */
     mem_write8(c->mem, c->regs->pc+1, 0xff);
@@ -770,7 +772,7 @@ TEST(inc16Test, inc16) {
     mem_write8(c->mem, c->regs->pc+3, 0x03); /* Increase BC + 1 */
     mem_write8(c->mem, c->regs->pc+4, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 10);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 10);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0x00);
 
     /* ld DE, nnnn => 0x01nnnn */
@@ -811,7 +813,7 @@ TEST(loadBCTest, loadBC) {
     mem_write8(c->mem, c->regs->pc+2, 0xef);
     mem_write8(c->mem, c->regs->pc+3, 0x00); /* NOOP => quit */
     run_cpu_loop(c);
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 4);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 4);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
 
     /* Load from address @ reg pair register into A reg */
@@ -819,7 +821,7 @@ TEST(loadBCTest, loadBC) {
     mem_write8(c->mem, c->regs->pc, 0x0A); /* Load *(BC), A */
     mem_write8(c->mem, c->regs->pc+1, 0x00);
     run_cpu_loop(c);
-    EXPECT_EQ(c->regs->pc, GAME_ROM_BANK_0_START + 6);
+    EXPECT_EQ(c->regs->pc, GAME_CODE_BANK_0_START + 6);
     EXPECT_EQ(get_reg_pair(c->regs, _BC), 0xbeef);
     EXPECT_EQ(mem_read8(c->mem, get_reg_pair(c->regs, _BC)), 0xaf);
     EXPECT_EQ( *(get_reg(c->regs, _A)), 0xaf);
@@ -1391,11 +1393,75 @@ TEST (loadHLSPplusRTest, loadHLSPplusR) {
     mem_write8(c->mem, c->regs->pc + 3, 0xc5); /* PUSH BC */
     mem_write16(c->mem, c->regs->pc + 4, 0xf802); /* LD HL, SP + r8 */
     mem_write8(c->mem, c->regs->pc + 6, 0x00); /* nnnn */
-    breakpoint();
     run_cpu_loop(c);
 
     EXPECT_EQ(get_reg_pair(c->regs, _HL), 0xfffa);
     EXPECT_EQ(c->regs->flag, 0);
 
 }
+
+/*************************/
+/* Extended instructions */
+/*************************/
+TEST (rlcTest, rlc) {
+
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+
+    mem_write16(c->mem, c->regs->pc, 0x0685); /* LD B, 0x85 */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb00); /* RLC B -> Shift B */
+    run_cpu_loop(c);
+    // 0x85 = 1000 0101
+    // 0x0b = 0000 1011
+    EXPECT_EQ(*(get_reg(c->regs, _B)), 0x0B);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 1); // Turn carry bit on 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x8120); /* LD B, 0x8120 */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb06); /* RLC HL -> Shift B */
+    run_cpu_loop(c);
+    // cy = 1
+    // 0x8120 = 1000 0001 0010 0000
+    // 0x0241 = 0000 0010 0100 0001
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0241);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+}
+
+TEST (rrcTest, rrc) {
+
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 1);
+
+    mem_write16(c->mem, c->regs->pc, 0x0e01); /* LD C nn */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb09); /* RRC C -> Shift C */
+    breakpoint();
+    run_cpu_loop(c);
+    // 0x01 = 0000 0001
+    // 0x80 = 1000 0000
+    EXPECT_EQ(*(get_reg(c->regs, _C)), 0x80);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x0000); /* LD B, 0x8120 */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb0e); // RRC HL -> 
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0000);
+    EXPECT_EQ(c->regs->flag, Z_MASK);
+    // // cy = 1
+    // // 0x8120 = 1000 0001 0010 0000
+    // // 0x0241 = 0000 0010 0100 0001
+    set_all_flags(c->regs, 0, 0, 0, 1); // Turn carry bit off 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x0841); /* LD HL, 0x0841 */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb0e); // RRC HL -> 
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x8420);
+    EXPECT_EQ(c->regs->flag, CY_MASK);
+}
+
+
 }
