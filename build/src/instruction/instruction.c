@@ -310,7 +310,31 @@ void pop(cpu *core, instruction i) {
   mem_write16(core->mem, address, new_value);
 }
 
-/* Shifting register left or right by 1 */
+/* Shift register left or right by 1 */
+void shift_reg(cpu *core, instruction i, bool left_shift) {
+
+  enum reg_enum reg_e = i.args.src_reg;
+  if (i.args.src_pair == _HL)
+    reg_e = _L; // We only shift the lower 8 bits == L reg
+
+  uint8_t *reg = get_reg(core->regs, reg_e);
+
+  /* Get the bit that is being shifted out */
+  uint8_t removed_bit = left_shift ? ((*reg) & 0x80) >> 7 : (*reg) & 0x01;
+  /* Shift the register */
+  uint8_t new_reg = left_shift ? (*reg) << 1 : (*reg) >> 1;
+
+  if (!left_shift)
+    // Top bit remains unchanged
+    new_reg = new_reg | ((*reg) & 0x80);
+
+  /* Set register and flags */
+  set_reg(core->regs, reg_e, new_reg);
+  set_all_flags(core->regs, check_zero(new_reg), 0, 0, removed_bit);
+  return;
+}
+
+/* Rotate register left or right by 1 */
 void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,
                 bool is_prefix) {
   /* Handle reg pair */
@@ -344,7 +368,6 @@ void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,
 
   // The bit that has been shifted off
   uint8_t replace = left_shift ? (*r) & 0x80 : (*r) & 0x01;
-  printf("replace = %x\n", replace);
 
   /* New value of the register */
   uint8_t new_r = left_shift ? (*r) << 1 : (*r) >> 1;
@@ -2012,6 +2035,9 @@ instruction exec_prefix(cpu *core, instruction out) {
   arguments args;
 
   switch (out.opcode) {
+  /***************/
+  /* 0x00 - 0x0f */
+  /***************/
   case 0x00: /* RLC B */
     args = new_args(_B, _, __, __);
     set_instruction_vars(core, &out, 2, 8, args);
@@ -2092,6 +2118,9 @@ instruction exec_prefix(cpu *core, instruction out) {
     set_instruction_vars(core, &out, 2, 8, args);
     rotate_reg(core, out, false, true, true);
     break;
+  /***************/
+  /* 0x10 - 0x1f */
+  /***************/
   case 0x10: /* RL B */
     args = new_args(_B, _, __, __);
     set_instruction_vars(core, &out, 2, 8, args);
@@ -2171,6 +2200,90 @@ instruction exec_prefix(cpu *core, instruction out) {
     args = new_args(_A, _, __, __);
     set_instruction_vars(core, &out, 2, 8, args);
     rotate_reg(core, out, false, false, true);
+    break;
+
+  /***************/
+  /* 0x20 - 0x2f */
+  /***************/
+  case 0x20: // SLA B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x21: // SLA C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x22: // SLA D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x23: // SLA E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x24: // SLA H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x25: // SLA L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x26: // SLA HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x27: // SLA A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, true);
+    break;
+  case 0x28: // SRA B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x29: // SRA C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2a: // SRA D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2b: // SRA E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2c: // SRA H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2d: // SRA L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2e: // SRA HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x2f: // SRA A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
     break;
   default:
     printf("Instruction has not been implemeneted yet\n");
