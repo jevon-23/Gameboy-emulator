@@ -51,6 +51,24 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+void swap_reg(cpu *core, instruction i) {
+  enum reg_enum src = i.args.src_reg;
+  enum reg_pairs src_pair = i.args.src_pair;
+  if (src_pair != __) {
+    src = _L;
+  }
+
+  uint8_t *src_reg = get_reg(core->regs, src);
+
+  uint8_t new_bot = ((*src_reg) & 0xf0) >> 4;
+  uint8_t new_top = ((*src_reg) & 0x0f) << 4;
+
+  uint8_t out = (new_top) | (new_bot);
+  set_reg(core->regs, src, out);
+  set_all_flags(core->regs, check_zero(out), 0, 0, 0);
+
+  return;
+}
 
 /* TODO: What else do we need to add */
 void ei(cpu *core, instruction i) {
@@ -74,6 +92,7 @@ const uint8_t _20 = 0x20;
 const uint8_t _28 = 0x28;
 const uint8_t _30 = 0x30;
 const uint8_t _38 = 0x38;
+
 void rst(cpu *core, instruction i, const uint8_t address) {
 
   /* Store current pc into stack */
@@ -324,7 +343,8 @@ void shift_reg(cpu *core, instruction i, bool left_shift) {
   /* Shift the register */
   uint8_t new_reg = left_shift ? (*reg) << 1 : (*reg) >> 1;
 
-  if (!left_shift)
+  bool is_srl = (i.opcode >= 0x38) && (i.opcode <= 0x3f);
+  if (!left_shift && !is_srl)
     // Top bit remains unchanged
     new_reg = new_reg | ((*reg) & 0x80);
 
@@ -2281,6 +2301,86 @@ instruction exec_prefix(cpu *core, instruction out) {
     shift_reg(core, out, false);
     break;
   case 0x2f: // SRA A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x30: // SWAP B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x31: // SWAP C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x32: // SWAP D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x33: // SWAP E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x34: // SWAP H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x35: // SWAP L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x36: // SWAP HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x37: // SWAP A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    swap_reg(core, out);
+    break;
+  case 0x38: // SRA B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x39: // SRA C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3a: // SRA D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3b: // SRA E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3c: // SRA H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3d: // SRA L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3e: // SRA HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    shift_reg(core, out, false);
+    break;
+  case 0x3f: // SRA A
     args = new_args(_A, _, __, __);
     set_instruction_vars(core, &out, 2, 8, args);
     shift_reg(core, out, false);

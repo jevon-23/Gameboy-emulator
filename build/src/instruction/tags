@@ -45,8 +45,10 @@ noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
 pop	instruction.c	/^void pop(cpu *core, instruction i) {$/;"	f
 push	instruction.c	/^void push(cpu *core, instruction i) {$/;"	f
 ret	instruction.c	/^void ret(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
-rotate_reg	instruction.c	/^void rotate_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
+rotate_reg	instruction.c	/^void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,$/;"	f
 rst	instruction.c	/^void rst(cpu *core, instruction i, const uint8_t address) {$/;"	f
 set_instruction_vars	instruction.c	/^void set_instruction_vars(cpu *core, instruction *i, uint8_t len,$/;"	f
+shift_reg	instruction.c	/^void shift_reg(cpu *core, instruction i, bool left_shift) {$/;"	f
 stop_cpu	instruction.c	/^void stop_cpu(cpu *core, instruction i) { core->state = _STOP; }$/;"	f
 sub_reg	instruction.c	/^void sub_reg(cpu *core, instruction i) {$/;"	f
+swap_reg	instruction.c	/^void swap_reg(cpu *core, instruction i) {$/;"	f

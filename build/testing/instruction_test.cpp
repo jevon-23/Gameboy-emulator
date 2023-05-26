@@ -1544,4 +1544,53 @@ TEST (sraTest, sra) {
     EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0000);
     EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
 }
+
+TEST (swapTest, swap) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e8A); /* LD A, 0x8A */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb37); /* SWAP A */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* Exit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0xA8);
+    EXPECT_EQ(c->regs->flag, 0x00);
+
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e00); /* LD A, 0x00 */
+    mem_write16(c->mem, c->regs->pc +2, 0xcb37); /* SWAP A */
+    mem_write8(c->mem, c->regs->pc +4, 0x00); /* Exit */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+    EXPECT_EQ(c->regs->flag, Z_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x0001); /* LD B, 0x00ff */
+    mem_write16(c->mem, c->regs->pc +3, 0xcb2e); // SRA (HL)
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0000);
+    EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
+}
+
+TEST(sra2Test, sra2) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e01); /* LD A, 0x01 */
+    mem_write16(c->mem, c->regs->pc + 2, 0xcb3f); /* SRL A */
+
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x00);
+
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x00ff); /*  0x00ff */
+    mem_write16(c->mem, c->regs->pc + 3, 0xcb3e); /* SRL HL */
+
+    breakpoint();
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x007f);
+    EXPECT_EQ(c->regs->flag, CY_MASK );
+}
 }
