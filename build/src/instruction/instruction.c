@@ -51,6 +51,17 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+void bit_reg(cpu *core, instruction i, int bit_offset) {
+  enum reg_enum r = i.args.src_reg;
+  if (r == _)
+    r = _L;
+  uint8_t *reg = get_reg(core->regs, r);
+  uint8_t mask = 0x1 << bit_offset;
+
+  uint8_t bit = (*reg & mask) >> bit_offset;
+  set_all_flags(core->regs, !(bool)bit, false, true, 3);
+}
+
 void swap_reg(cpu *core, instruction i) {
   enum reg_enum src = i.args.src_reg;
   enum reg_pairs src_pair = i.args.src_pair;
@@ -404,7 +415,6 @@ void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,
                      i.opcode == 0x1f))
     set_all_flags(core->regs, false, false, false, replace != 0);
   else {
-    printf("setting righ flasg\n");
     set_all_flags(core->regs, check_zero(new_r), false, false, replace != 0);
   }
 
@@ -2385,6 +2395,329 @@ instruction exec_prefix(cpu *core, instruction out) {
     set_instruction_vars(core, &out, 2, 8, args);
     shift_reg(core, out, false);
     break;
+  case 0x40: // BIT 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x41: // BIT 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x42: // BIT 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x43: // BIT 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x44: // BIT 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x45: // BIT 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x46: // BIT 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x47: // BIT 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 0);
+    break;
+  case 0x48: // BIT 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x49: // BIT 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4a: // BIT 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4b: // BIT 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4c: // BIT 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4d: // BIT 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4e: // BIT 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x4f: // BIT 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 1);
+    break;
+  case 0x50: // BIT 2, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x51: // BIT 2, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x52: // BIT 2, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x53: // BIT 2, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x54: // BIT 2, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x55: // BIT 2, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x56: // BIT 2, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x57: // BIT 2, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 2);
+    break;
+  case 0x58: // BIT 3, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x59: // BIT 3, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5a: // BIT 3, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5b: // BIT 3, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5c: // BIT 3, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5d: // BIT 3, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5e: // BIT 3, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+  case 0x5f: // BIT 3, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 3);
+    break;
+
+  case 0x60: // BIT 4, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x61: // BIT 4, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x62: // BIT 4, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x63: // BIT 4, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x64: // BIT 4, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x65: // BIT 4, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x66: // BIT 4, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x67: // BIT 4, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 4);
+    break;
+  case 0x68: // BIT 5, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x69: // BIT 5, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6a: // BIT 5, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6b: // BIT 5, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6c: // BIT 5, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6d: // BIT 5, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6e: // BIT 5, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+  case 0x6f: // BIT 5, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 5);
+    break;
+
+  case 0x70: // BIT 6, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x71: // BIT 6, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x72: // BIT 6, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x73: // BIT 6, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x74: // BIT 6, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x75: // BIT 6, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x76: // BIT 6, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x77: // BIT 6, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 6);
+    break;
+  case 0x78: // BIT 7, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x79: // BIT 7, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7a: // BIT 7, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7b: // BIT 7, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7c: // BIT 7, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7d: // BIT 7, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7e: // BIT 7, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+  case 0x7f: // BIT 7, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    bit_reg(core, out, 7);
+    break;
+
   default:
     printf("Instruction has not been implemeneted yet\n");
   }

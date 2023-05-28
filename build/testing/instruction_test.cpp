@@ -1588,9 +1588,39 @@ TEST(sra2Test, sra2) {
     mem_write16(c->mem, c->regs->pc +1, 0x00ff); /*  0x00ff */
     mem_write16(c->mem, c->regs->pc + 3, 0xcb3e); /* SRL HL */
 
-    breakpoint();
     run_cpu_loop(c);
     EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x007f);
     EXPECT_EQ(c->regs->flag, CY_MASK );
+}
+
+TEST (bitTest, bit) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x3e80); /* LD A, 0x80 */
+    mem_write16(c->mem, c->regs->pc + 2, 0xcb7f); /* BIT 7, A */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x80);
+    EXPECT_EQ(c->regs->flag, H_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write16(c->mem, c->regs->pc, 0x2eef); /* LD L, 0xef */
+    mem_write16(c->mem, c->regs->pc + 2, 0xcb65); /* BIT 4, L */
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _L)), 0xef);
+    EXPECT_EQ(c->regs->flag, Z_MASK | H_MASK);
+
+    set_all_flags(c->regs, 0, 0, 0, 0);
+    mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
+    mem_write16(c->mem, c->regs->pc +1, 0x00fe); /*  0x00fe */
+    mem_write16(c->mem, c->regs->pc + 3, 0xcb46); /* BIT 0, HL */
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x00fe);
+    EXPECT_EQ(c->regs->flag, Z_MASK | H_MASK);
+
+    mem_write16(c->mem, c->regs->pc, 0xcb4e); /* BIT 1, HL */
+    run_cpu_loop(c);
+    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x00fe);
+    EXPECT_EQ(c->regs->flag, H_MASK);
 }
 }

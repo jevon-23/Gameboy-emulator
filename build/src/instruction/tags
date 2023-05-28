@@ -17,6 +17,7 @@ _CP	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	
 _OR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 _XOR	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	e	enum:logic_fn	file:
 add_reg	instruction.c	/^void add_reg(cpu *core, instruction i) {$/;"	f
+bit_reg	instruction.c	/^void bit_reg(cpu *core, instruction i, int bit_offset) {$/;"	f
 call	instruction.c	/^void call(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 cc_jump_relative	instruction.c	/^void cc_jump_relative(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 check_carry8_shift	instruction.c	/^bool check_carry8_shift(uint8_t v1, bool left_shift) {$/;"	f
