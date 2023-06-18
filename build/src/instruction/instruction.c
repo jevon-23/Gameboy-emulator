@@ -73,29 +73,44 @@ void reset_reg(cpu *core, instruction i, int bit_offset) {
 
 void bit_reg(cpu *core, instruction i, int bit_offset) {
   enum reg_enum r = i.args.src_reg;
-  if (r == _)
-    r = _L;
-  uint8_t *reg = get_reg(core->regs, r);
   uint8_t mask = 0x1 << bit_offset;
-
-  uint8_t bit = (*reg & mask) >> bit_offset;
+  uint8_t value = 0x00;
+  uint8_t bit = 0x00;
+  if (r == _) {
+    uint16_t address = get_reg_pair(core->regs, _HL);
+    value = mem_read8(core->mem, address);
+  } else {
+    value = *get_reg(core->regs, r);
+  }
+  bit = (value & mask) >> bit_offset;
   set_all_flags(core->regs, !(bool)bit, false, true, 3);
 }
 
 void swap_reg(cpu *core, instruction i) {
   enum reg_enum src = i.args.src_reg;
   enum reg_pairs src_pair = i.args.src_pair;
+
+  uint8_t value = 0x00;
+  uint16_t address = 0x0000;
+  bool is_reg_pair = false;
   if (src_pair != __) {
-    src = _L;
+    is_reg_pair = true;
+    address = get_reg_pair(core->regs, _HL);
+    value = mem_read8(core->mem, address);
+  } else {
+
+    uint8_t *src_reg = get_reg(core->regs, src);
+    value = *src_reg;
   }
 
-  uint8_t *src_reg = get_reg(core->regs, src);
-
-  uint8_t new_bot = ((*src_reg) & 0xf0) >> 4;
-  uint8_t new_top = ((*src_reg) & 0x0f) << 4;
+  uint8_t new_bot = ((value)&0xf0) >> 4;
+  uint8_t new_top = ((value)&0x0f) << 4;
 
   uint8_t out = (new_top) | (new_bot);
-  set_reg(core->regs, src, out);
+  if (is_reg_pair)
+    mem_write8(core->mem, address, out);
+  else
+    set_reg(core->regs, src, out);
   set_all_flags(core->regs, check_zero(out), 0, 0, 0);
 
   return;
@@ -364,23 +379,34 @@ void pop(cpu *core, instruction i) {
 void shift_reg(cpu *core, instruction i, bool left_shift) {
 
   enum reg_enum reg_e = i.args.src_reg;
-  if (i.args.src_pair == _HL)
-    reg_e = _L; // We only shift the lower 8 bits == L reg
+  uint8_t value = 0x00;
+  uint16_t address = 0x0000;
+  bool is_reg_pair = false;
+  if (i.args.src_pair == _HL) {
+    address = get_reg_pair(core->regs, _HL);
+    value = mem_read8(core->mem, address);
+    is_reg_pair = true;
 
-  uint8_t *reg = get_reg(core->regs, reg_e);
+  } else {
+    uint8_t *reg = get_reg(core->regs, reg_e);
+    value = *reg;
+  }
 
   /* Get the bit that is being shifted out */
-  uint8_t removed_bit = left_shift ? ((*reg) & 0x80) >> 7 : (*reg) & 0x01;
+  uint8_t removed_bit = left_shift ? ((value)&0x80) >> 7 : (value)&0x01;
   /* Shift the register */
-  uint8_t new_reg = left_shift ? (*reg) << 1 : (*reg) >> 1;
+  uint8_t new_reg = left_shift ? (value) << 1 : (value) >> 1;
 
   bool is_srl = (i.opcode >= 0x38) && (i.opcode <= 0x3f);
   if (!left_shift && !is_srl)
     // Top bit remains unchanged
-    new_reg = new_reg | ((*reg) & 0x80);
+    new_reg = new_reg | ((value)&0x80);
 
   /* Set register and flags */
-  set_reg(core->regs, reg_e, new_reg);
+  if (is_reg_pair)
+    mem_write8(core->mem, address, new_reg);
+  else
+    set_reg(core->regs, reg_e, new_reg);
   set_all_flags(core->regs, check_zero(new_reg), 0, 0, removed_bit);
   return;
 }

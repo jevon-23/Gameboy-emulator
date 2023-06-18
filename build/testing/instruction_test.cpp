@@ -1402,6 +1402,9 @@ TEST (loadHLSPplusRTest, loadHLSPplusR) {
 
 /*************************/
 /* Extended instructions */
+/* TODO: update all HL functions
+ * to read from an address instead 
+ * of reading from _HL reg directly */
 /*************************/
 TEST (rlcTest, rlc) {
 
@@ -1518,10 +1521,11 @@ TEST (slaTest, sla) {
 
     set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
     mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
-    mem_write16(c->mem, c->regs->pc +1, 0x00ff); /* LD B, 0x00ff */
+    mem_write16(c->mem, c->regs->pc +1, 0xbeef); /* LD B, 0x00ff */
+    mem_write8(c->mem, 0xbeef, 0xff); /* LD HL, d16 */
     mem_write16(c->mem, c->regs->pc +3, 0xcb26); // SLA (HL)
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x00fe);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0x00fe);
     EXPECT_EQ(c->regs->flag, CY_MASK);
 }
 
@@ -1538,10 +1542,12 @@ TEST (sraTest, sra) {
 
     set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
     mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
-    mem_write16(c->mem, c->regs->pc +1, 0x0001); /* LD B, 0x00ff */
+    mem_write16(c->mem, c->regs->pc +1, 0xc0fe); /* LD B, 0x00ff */
+
+    mem_write8(c->mem, 0xc0fe, 0x01); /* LD HL, d16 */
     mem_write16(c->mem, c->regs->pc +3, 0xcb2e); // SRA (HL)
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0000);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0x0000);
     EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
 }
 
@@ -1566,10 +1572,11 @@ TEST (swapTest, swap) {
 
     set_all_flags(c->regs, 0, 0, 0, 0); // Turn carry bit off 
     mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
-    mem_write16(c->mem, c->regs->pc +1, 0x0001); /* LD B, 0x00ff */
+    mem_write16(c->mem, c->regs->pc +1, 0xdead); /* LD B, 0x00ff */
+    mem_write8(c->mem, 0xdead, 0x01); /* LD (HL), d8 */
     mem_write16(c->mem, c->regs->pc +3, 0xcb2e); // SRA (HL)
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x0000);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0x0000);
     EXPECT_EQ(c->regs->flag, CY_MASK | Z_MASK);
 }
 
@@ -1585,11 +1592,12 @@ TEST(sra2Test, sra2) {
 
     set_all_flags(c->regs, 0, 0, 0, 0);
     mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
-    mem_write16(c->mem, c->regs->pc +1, 0x00ff); /*  0x00ff */
+    mem_write16(c->mem, c->regs->pc +1, 0xbeef); /*  0x00ff */
+    mem_write8(c->mem, 0xbeef, 0xff); /* LD HL, d16 */
     mem_write16(c->mem, c->regs->pc + 3, 0xcb3e); /* SRL HL */
 
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x007f);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0x007f);
     EXPECT_EQ(c->regs->flag, CY_MASK );
 }
 
@@ -1612,15 +1620,16 @@ TEST (bitTest, bit) {
 
     set_all_flags(c->regs, 0, 0, 0, 0);
     mem_write8(c->mem, c->regs->pc, 0x21); /* LD HL, d16 */
-    mem_write16(c->mem, c->regs->pc +1, 0x00fe); /*  0x00fe */
+    mem_write16(c->mem, c->regs->pc +1, 0xbeef); /*  0x00fe */
+    mem_write8(c->mem, 0xbeef, 0xfe);
     mem_write16(c->mem, c->regs->pc + 3, 0xcb46); /* BIT 0, HL */
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x00fe);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0xfe);
     EXPECT_EQ(c->regs->flag, Z_MASK | H_MASK);
 
     mem_write16(c->mem, c->regs->pc, 0xcb4e); /* BIT 1, HL */
     run_cpu_loop(c);
-    EXPECT_EQ((get_reg_pair(c->regs, _HL)), 0x00fe);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0xfe);
     EXPECT_EQ(c->regs->flag, H_MASK);
 }
 
