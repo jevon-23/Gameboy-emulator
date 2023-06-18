@@ -51,6 +51,26 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+void reset_reg(cpu *core, instruction i, int bit_offset) {
+  enum reg_enum r = i.args.src_reg;
+  uint8_t mask = ~(0x1 << bit_offset);
+
+  if (r == _) {
+
+    uint16_t value = 0x0000;
+    uint16_t reg = get_reg_pair(core->regs, _HL);
+    value = mem_read8(core->mem, reg);
+    mem_write8(core->mem, reg, value & mask);
+  } else {
+    uint8_t value = 0x0;
+    uint8_t *reg = get_reg(core->regs, r);
+    value = *reg;
+    set_reg(core->regs, r, (value & mask));
+  }
+
+  return;
+}
+
 void bit_reg(cpu *core, instruction i, int bit_offset) {
   enum reg_enum r = i.args.src_reg;
   if (r == _)
@@ -2718,6 +2738,329 @@ instruction exec_prefix(cpu *core, instruction out) {
     bit_reg(core, out, 7);
     break;
 
+  case 0x80: // RST 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x81: // RST 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x82: // RST 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x83: // RST 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x84: // RST 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x85: // RST 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x86: // RST 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x87: // RST 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    reset_reg(core, out, 0);
+    break;
+  case 0x88: // RST 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x89: // RST 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8a: // RST 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8b: // RST 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8c: // RST 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8d: // RST 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8e: // RST 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+  case 0x8f: // RST 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 1);
+    break;
+
+  case 0x90: // RST 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x91: // RST 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x92: // RST 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x93: // RST 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x94: // RST 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x95: // RST 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x96: // RST 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x97: // RST 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 2);
+    break;
+  case 0x98: // RST 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x99: // RST 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9a: // RST 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9b: // RST 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9c: // RST 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9d: // RST 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9e: // RST 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+  case 0x9f: // RST 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 3);
+    break;
+
+  case 0xa0: // RST 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa1: // RST 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa2: // RST 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa3: // RST 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa4: // RST 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa5: // RST 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa6: // RST 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa7: // RST 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 4);
+    break;
+  case 0xa8: // RST 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xa9: // RST 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xaa: // RST 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xab: // RST 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xac: // RST 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xad: // RST 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xae: // RST 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+  case 0xaf: // RST 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 5);
+    break;
+
+  case 0xb0: // RST 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb1: // RST 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb2: // RST 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb3: // RST 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb4: // RST 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb5: // RST 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb6: // RST 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb7: // RST 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    reset_reg(core, out, 6);
+    break;
+  case 0xb8: // RST 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xb9: // RST 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xba: // RST 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xbb: // RST 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xbc: // RST 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xbd: // RST 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xbe: // RST 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
+  case 0xbf: // RST 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    reset_reg(core, out, 7);
+    break;
   default:
     printf("Instruction has not been implemeneted yet\n");
   }
