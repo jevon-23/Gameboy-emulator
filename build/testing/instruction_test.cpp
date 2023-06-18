@@ -1657,10 +1657,33 @@ TEST (resTest, res) {
     mem_write16(c->mem, c->regs->pc + 1, 0xbeef); // 0xffff
     mem_write8(c->mem, 0xbeef, 0xff);
     mem_write16(c->mem, c->regs->pc +3, 0xcb9e); // RST 3, HL 
-    breakpoint();
     run_cpu_loop(c);
     EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0xf7);
 
 
+}
+
+TEST (setTest, set) {
+    memory *m = new_memory();
+    cpu *c = new_cpu(m);
+    set_all_flags(c->regs, 0, 0, 0, 0);
+
+
+    mem_write16(c->mem, c->regs->pc, 0x3e80); // LD A, 80
+    mem_write16(c->mem, c->regs->pc +2, 0xcbdf); // SET 1, A
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _A)), 0x88);
+
+    mem_write16(c->mem, c->regs->pc, 0x2e3b); // LD L, 3b
+    mem_write16(c->mem, c->regs->pc +2, 0xcbfd); // SET L, 7
+    run_cpu_loop(c);
+    EXPECT_EQ(*(get_reg(c->regs, _L)), 0xbb);
+
+    mem_write8(c->mem, c->regs->pc, 0x21); // LD HL, 0xffff
+    mem_write16(c->mem, c->regs->pc + 1, 0xbeef); // 0xffff
+    mem_write8(c->mem, 0xbeef, 0x00);
+    mem_write16(c->mem, c->regs->pc +3, 0xcbde); // SET 3, HL 
+    run_cpu_loop(c);
+    EXPECT_EQ(mem_read8(c->mem, (get_reg_pair(c->regs, _HL))), 0x08);
 }
 }

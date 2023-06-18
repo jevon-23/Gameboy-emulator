@@ -51,6 +51,23 @@ bool check_carry8_shift(uint8_t v1, bool left_shift) {
 /************************************/
 /* Helper functionality for opcodes */
 /************************************/
+void op_set_reg(cpu *core, instruction i, int bit_offset) {
+  enum reg_enum r = i.args.src_reg;
+  uint8_t mask = (0x1 << (bit_offset));
+  uint8_t value = 0x00;
+
+  if (r == _) {
+    uint16_t address = 0x0000;
+    address = get_reg_pair(core->regs, _HL);
+    value = (mem_read8(core->mem, address)) | mask;
+
+    mem_write8(core->mem, address, value);
+    return;
+  }
+  value = (*get_reg(core->regs, r)) | mask;
+  set_reg(core->regs, r, value);
+}
+
 void reset_reg(cpu *core, instruction i, int bit_offset) {
   enum reg_enum r = i.args.src_reg;
   uint8_t mask = ~(0x1 << bit_offset);
@@ -3086,6 +3103,330 @@ instruction exec_prefix(cpu *core, instruction out) {
     args = new_args(_A, _, __, __);
     set_instruction_vars(core, &out, 2, 0, args);
     reset_reg(core, out, 7);
+    break;
+
+  case 0xc0: // SET 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc1: // SET 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc2: // SET 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc3: // SET 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc4: // SET 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc5: // SET 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc6: // SET 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc7: // SET 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 8, args);
+    op_set_reg(core, out, 0);
+    break;
+  case 0xc8: // SET 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xc9: // SET 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xca: // SET 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xcb: // SET 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xcc: // SET 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xcd: // SET 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xce: // SET 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+  case 0xcf: // SET 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 1);
+    break;
+
+  case 0xd0: // SET 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd1: // SET 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd2: // SET 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd3: // SET 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd4: // SET 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd5: // SET 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd6: // SET 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd7: // SET 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 2);
+    break;
+  case 0xd8: // SET 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xd9: // SET 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xda: // SET 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xdb: // SET 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xdc: // SET 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xdd: // SET 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xde: // SET 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+  case 0xdf: // SET 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 3);
+    break;
+
+  case 0xe0: // SET 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe1: // SET 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe2: // SET 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe3: // SET 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe4: // SET 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe5: // SET 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe6: // SET 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe7: // SET 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 4);
+    break;
+  case 0xe8: // SET 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xe9: // SET 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xea: // SET 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xeb: // SET 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xec: // SET 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xed: // SET 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xee: // SET 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+  case 0xef: // SET 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 5);
+    break;
+
+  case 0xf0: // SET 0, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf1: // SET 0, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf2: // SET 0, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf3: // SET 0, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf4: // SET 0, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf5: // SET 0, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf6: // SET 0, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf7: // SET 0, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 9, args);
+    op_set_reg(core, out, 6);
+    break;
+  case 0xf8: // SET 1, B
+    args = new_args(_B, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xf9: // SET 1, C
+    args = new_args(_C, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xfa: // SET 1, D
+    args = new_args(_D, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xfb: // SET 1, E
+    args = new_args(_E, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xfc: // SET 1, H
+    args = new_args(_H, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xfd: // SET 1, L
+    args = new_args(_L, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xfe: // SET 1, HL
+    args = new_args(_, _, _HL, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
+    break;
+  case 0xff: // SET 1, A
+    args = new_args(_A, _, __, __);
+    set_instruction_vars(core, &out, 2, 0, args);
+    op_set_reg(core, out, 7);
     break;
   default:
     printf("Instruction has not been implemeneted yet\n");

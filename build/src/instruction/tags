@@ -43,8 +43,10 @@ logic_fn	instruction.c	/^enum logic_fn { _AND, _XOR, _OR, _CP };$/;"	g	file:
 logic_reg	instruction.c	/^void logic_reg(cpu *core, instruction i, enum logic_fn fn_type) {$/;"	f
 new_args	instruction.c	/^arguments new_args(enum reg_enum src_reg, enum reg_enum dst_reg,$/;"	f
 noop	instruction.c	/^void noop(cpu *core, instruction i) { return; }$/;"	f
+op_set_reg	instruction.c	/^void op_set_reg(cpu *core, instruction i, int bit_offset) {$/;"	f
 pop	instruction.c	/^void pop(cpu *core, instruction i) {$/;"	f
 push	instruction.c	/^void push(cpu *core, instruction i) {$/;"	f
+reset_reg	instruction.c	/^void reset_reg(cpu *core, instruction i, int bit_offset) {$/;"	f
 ret	instruction.c	/^void ret(cpu *core, instruction i, uint8_t mask, bool set) {$/;"	f
 rotate_reg	instruction.c	/^void rotate_reg(cpu *core, instruction i, bool left_shift, bool is_carry,$/;"	f
 rst	instruction.c	/^void rst(cpu *core, instruction i, const uint8_t address) {$/;"	f
